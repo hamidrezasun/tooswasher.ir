@@ -1,4 +1,4 @@
-#!/root/tooswasher.ir/.venv/bin/python3
+#!/root/tooswasher.ir/.venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys
