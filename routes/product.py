@@ -1,35 +1,33 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
-from utils.auth import get_current_user, get_db
-from models.user import User
-from models.product import Product
-from schemas.product import ProductCreate, Product
+from typing import List
+import crud.product as product_crud
+import schemas.product as product_schemas
+import schemas.user as user_schemas
+import auth
+from database import get_db
 
-product_router = APIRouter()
+router = APIRouter(
+    prefix="/products",
+    tags=["products"]
+)
 
-@product_router.post("/", response_model=Product)
+@router.post("/", response_model=product_schemas.Product)
 def create_product(
-    product: ProductCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user)
+    product: product_schemas.ProductCreate,
+    current_user: user_schemas.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
 ):
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="Only admins can create products")
-    db_product = Product(
-        name=product.name,
-        description=product.description,
-        price=product.price,
-        image_url=product.image_url,
-        amount=product.amount
-    )
-    db.add(db_product)
-    db.commit()
-    db.refresh(db_product)
-    return db_product
+    return product_crud.create_product(db=db, product=product, owner_id=current_user.id)
 
-@product_router.get("/{product_id}", response_model=Product)
+@router.get("/", response_model=List[product_schemas.Product])
+def read_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+    products = product_crud.get_products(db, skip=skip, limit=limit)
+    return products
+
+@router.get("/{product_id}", response_model=product_schemas.Product)
 def read_product(product_id: int, db: Session = Depends(get_db)):
-    product = db.query(Product).filter(Product.id == product_id).first()
-    if not product:
+    product = product_crud.get_product(db, product_id=product_id)
+    if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return product

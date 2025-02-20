@@ -1,6 +1,10 @@
-from sqlalchemy import Column, Integer, String, Boolean
-from sqlalchemy.orm import relationship
-from .base import Base
+from sqlalchemy import Boolean, Column, Integer, String, Enum
+from database import Base
+import enum
+
+class RoleEnum(enum.Enum):
+    customer = "customer"
+    admin = "admin"
 
 class User(Base):
     __tablename__ = "users"
@@ -10,7 +14,9 @@ class User(Base):
     email = Column(String, unique=True, index=True)
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
-    role = Column(String, default="customer")
-
-    # Relationship to Cart
-    carts = relationship("Cart", back_populates="user")
+    role = Column(Enum(RoleEnum), default=RoleEnum.customer)
+    national_id = Column(String, unique=True, index=True)  # Added
+    address = Column(String)                              # Added
+    state = Column(String)                                # Added
+    city = Column(String)                                 # Added
+    phone_number = Column(String)                         # Added

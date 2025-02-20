@@ -1,8 +1,13 @@
 from fastapi import FastAPI
-from routes.user import user_router
-from routes.product import product_router
-from routes.cart import cart_router
-from models.base import Base, engine
+import uvicorn
+from database import Base, engine, get_db
+from routes.user import router as user_router
+from routes.product import router as product_router
+from routes.cart import router as cart_router
+from crud.user import get_user_by_username, create_user
+from schemas.user import UserCreate
+from utils import get_password_hash
+from sqlalchemy.orm import Session
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -10,10 +15,44 @@ Base.metadata.create_all(bind=engine)
 app = FastAPI()
 
 # Include routers
-app.include_router(user_router, prefix="/users", tags=["users"])
-app.include_router(product_router, prefix="/products", tags=["products"])
-app.include_router(cart_router, prefix="/cart", tags=["cart"])
+app.include_router(user_router)
+app.include_router(product_router)
+app.include_router(cart_router)
 
-@app.get("/")
-def read_root():
-    return {"message": "Welcome to the E-commerce API"}
+def create_default_admin(db: Session):
+    """Create a default admin user if it doesn't exist."""
+    admin_username = "admin"
+    admin_email = "admin@example.com"
+    admin_password = "1234"  # Change this in production!
+    
+    # Check if admin exists
+    existing_admin = get_user_by_username(db, admin_username)
+    if not existing_admin:
+        admin_user = UserCreate(
+            username=admin_username,
+            email=admin_email,
+            password=admin_password,
+            national_id="0000000000",  # Default national ID
+            address="Admin Street",
+            state="Admin State",
+            city="Admin City",
+            phone_number="000-000-0000"
+        )
+        # Create admin with role 'admin' by directly setting it in the database
+        db_user = create_user(db, admin_user)
+        db_user.role = "admin"  # Override the default 'customer' role
+        db.commit()
+        db.refresh(db_user)
+        print(f"Default admin created: username={admin_username}, password={admin_password}")
+    else:
+        print("Default admin already exists")
+
+# Run this when the app starts
+@app.on_event("startup")
+def startup_event():
+    db = next(get_db())
+    create_default_admin(db)
+    db.close()
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)

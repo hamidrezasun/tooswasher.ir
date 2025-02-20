@@ -1,17 +1,38 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel
 from typing import Optional
+from enum import Enum
+
+class RoleEnum(str, Enum):
+    customer = "customer"
+    admin = "admin"
 
 class UserBase(BaseModel):
     username: str
-    email: EmailStr
+    email: str
+    national_id: str
+    address: str
+    state: str
+    city: str
+    phone_number: str
 
 class UserCreate(UserBase):
     password: str
 
 class User(UserBase):
     id: int
-    is_active: Optional[bool] = True
-    role: Optional[str] = "customer"
+    is_active: bool
+    role: RoleEnum
 
     class Config:
-        from_attributes = True
+        orm_mode = True
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+
+class TokenData(BaseModel):
+    username: Optional[str] = None
+    role: Optional[RoleEnum] = None
+
+class UserRoleUpdate(BaseModel):  # New schema for role updates
+    role: RoleEnum

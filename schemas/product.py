@@ -3,16 +3,16 @@ from typing import Optional
 
 class ProductBase(BaseModel):
     name: str
-    description: str
+    description: Optional[str] = None
     price: float
-    image_url: Optional[str] = None
-    amount: Optional[int] = 0
+    stock: int
 
 class ProductCreate(ProductBase):
     pass
 
 class Product(ProductBase):
     id: int
+    owner_id: int
 
     class Config:
-        from_attributes = True
+        orm_mode = True
