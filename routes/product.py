@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from utils.auth import get_current_user, get_db
-from models.user import User  # Import the User model
+from models.user import User
 from models.product import Product
 from schemas.product import ProductCreate, Product
 
@@ -14,11 +14,13 @@ def create_product(
     current_user: User = Depends(get_current_user)
 ):
     if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="شما مجاز به انجام این کار نیستید")
+        raise HTTPException(status_code=403, detail="Only admins can create products")
     db_product = Product(
         name=product.name,
         description=product.description,
-        price=product.price
+        price=product.price,
+        image_url=product.image_url,
+        amount=product.amount
     )
     db.add(db_product)
     db.commit()
@@ -29,5 +31,5 @@ def create_product(
 def read_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.id == product_id).first()
     if not product:
-        raise HTTPException(status_code=404, detail="محصول یافت نشد")
+        raise HTTPException(status_code=404, detail="Product not found")
     return product
