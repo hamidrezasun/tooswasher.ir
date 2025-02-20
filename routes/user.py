@@ -71,3 +71,68 @@ async def update_user_role(
         return updated_user
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+
+@router.post("/request-password-reset")
+async def request_password_reset(
+    email: str,
+    db: Session = Depends(get_db)
+):
+    user = user_crud.get_user_by_email(db, email)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    
+    # Generate a reset token
+    reset_token = user_crud.generate_reset_token(db, email)
+    
+    # Send the reset token via email (optional)
+    # send_reset_email(email, reset_token)
+    
+    return {"message": "Password reset token generated", "reset_token": reset_token}
+
+# New Endpoint: Reset Password
+@router.post("/reset-password")
+async def reset_password(
+    reset_data: user_schemas.ResetPassword,
+    db: Session = Depends(get_db)
+):
+    try:
+        user = user_crud.validate_reset_token(db, reset_data.reset_token)
+        if not user:
+            raise HTTPException(status_code=400, detail="Invalid or expired reset token")
+        
+        # Update the user's password
+        user_crud.reset_password(db, reset_data.reset_token, reset_data.new_password)
+        
+        return {"message": "Password reset successfully"}
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    
+
+### Change Password ###
+@router.put("/change-password", response_model=user_schemas.MessageResponse)
+async def change_password(
+    password_data: user_schemas.ChangePassword,
+    current_user: user_schemas.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    if not auth.verify_password(password_data.old_password, current_user.hashed_password):
+        raise HTTPException(status_code=400, detail="Old password is incorrect")
+
+    if password_data.old_password == password_data.new_password:
+        raise HTTPException(status_code=400, detail="New password cannot be the same as old password")
+
+    user_crud.update_user_password(db, current_user.id, password_data.old_password,password_data.new_password)
+    
+    return {"message": "Password changed successfully"}
+
+@router.put("/edit", response_model=user_schemas.User)
+async def edit_user(
+    user_update: user_schemas.UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: user_schemas.User = Depends(auth.get_current_active_user)
+):
+    try:
+        updated_user = user_crud.update_user(db, current_user.id, user_update)
+        return updated_user
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))

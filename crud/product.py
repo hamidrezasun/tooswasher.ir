@@ -3,6 +3,7 @@ from models.product import Product
 import schemas.product as product_schemas
 
 def create_product(db: Session, product: product_schemas.ProductCreate, owner_id: int):
+    
     db_product = Product(**product.dict(), owner_id=owner_id)
     db.add(db_product)
     db.commit()

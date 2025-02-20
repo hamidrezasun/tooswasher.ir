@@ -10,3 +10,4 @@ class Product(Base):
     price = Column(Float)
     stock = Column(Integer)
     owner_id = Column(Integer, ForeignKey("users.id"))
+    image = Column(String)  # New field for storing image URL or file path

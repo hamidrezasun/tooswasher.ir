@@ -15,7 +15,7 @@ router = APIRouter(
 @router.post("/", response_model=product_schemas.Product)
 def create_product(
     product: product_schemas.ProductCreate,
-    current_user: user_schemas.User = Depends(auth.get_current_active_user),
+    current_user: user_schemas.User = Depends(auth.get_current_admin_user),
     db: Session = Depends(get_db)
 ):
     return product_crud.create_product(db=db, product=product, owner_id=current_user.id)

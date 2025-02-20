@@ -6,6 +6,7 @@ class ProductBase(BaseModel):
     description: Optional[str] = None
     price: float
     stock: int
+    image: Optional[str] = None  # New field for image URL or file path
 
 class ProductCreate(ProductBase):
     pass

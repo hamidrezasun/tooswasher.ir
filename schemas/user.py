@@ -34,5 +34,30 @@ class TokenData(BaseModel):
     username: Optional[str] = None
     role: Optional[RoleEnum] = None
 
-class UserRoleUpdate(BaseModel):  # New schema for role updates
+class UserRoleUpdate(BaseModel):
     role: RoleEnum
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+
+class ResetPassword(BaseModel):
+    reset_token: str
+    new_password: str
+
+class ChangePassword(BaseModel):
+    old_password: str
+    new_password: str
+
+class MessageResponse(BaseModel):
+    message: str
+
+class UserUpdate(BaseModel):
+    username: Optional[str] = None
+    email: Optional[str] = None
+    address: Optional[str] = None
+    state: Optional[str] = None
+    city: Optional[str] = None
+    phone_number: Optional[str] = None
+
+class MessageResponse(BaseModel):
+    message: str
