@@ -10,6 +10,8 @@ class ProductBase(BaseModel):
     stock: int
     image: Optional[str] = None
     category_id: int  # Now references a Category ID
+    minimum_order: Optional[int] = 1
+    rate: Optional[float] = None
 
 class ProductCreate(ProductBase):
     pass
