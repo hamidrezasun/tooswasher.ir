@@ -26,4 +26,4 @@ class Product(ProductBase):
     category: Category  # Expects the full Category object
 
     class Config:
-        orm_mode = True
+       from_attributes = True

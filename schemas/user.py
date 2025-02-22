@@ -24,7 +24,7 @@ class User(UserBase):
     role: RoleEnum
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 class Token(BaseModel):
     access_token: str
