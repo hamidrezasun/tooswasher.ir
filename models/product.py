@@ -1,4 +1,6 @@
+# models/product.py
 from sqlalchemy import Column, Integer, String, Float, ForeignKey
+from sqlalchemy.orm import relationship
 from database import Base
 
 class Product(Base):
@@ -10,4 +12,6 @@ class Product(Base):
     price = Column(Float)
     stock = Column(Integer)
     owner_id = Column(Integer, ForeignKey("users.id"))
-    image = Column(String)  # New field for storing image URL or file path
+    image = Column(String)
+    category_id = Column(Integer, ForeignKey("categories.id"))
+    category = relationship("Category")  # Define relationship here

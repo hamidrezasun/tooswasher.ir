@@ -52,7 +52,6 @@ class MessageResponse(BaseModel):
     message: str
 
 class UserUpdate(BaseModel):
-    username: Optional[str] = None
     email: Optional[str] = None
     address: Optional[str] = None
     state: Optional[str] = None

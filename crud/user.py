@@ -108,8 +108,6 @@ def update_user(db: Session, user_id: int, user_update: user_schemas.UserUpdate)
         raise ValueError("User not found")
 
     # Update only the provided fields
-    if user_update.username:
-        user.username = user_update.username
     if user_update.email:
         user.email = user_update.email
     if user_update.address:

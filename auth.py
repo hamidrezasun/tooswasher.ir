@@ -8,11 +8,6 @@ from crud.user import get_user_by_username
 from database import get_db
 from utils import verify_password
 from typing import Optional
-import logging
-
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
-
 SECRET_KEY = "your-secret-key-here"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
@@ -33,7 +28,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None):
         expire = datetime.utcnow() + timedelta(minutes=15)
     to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
-    logger.info(f"Created token with payload: {to_encode}")
     return encoded_jwt
 
 async def get_current_user(
@@ -56,7 +50,6 @@ async def get_current_user(
     user = get_user_by_username(db, username=token_data.username)
     if user is None:
         raise credentials_exception
-    logger.info(f"User from DB: id={user.id}, username={user.username}, role={user.role}")
     return user
 
 async def get_current_active_user(current_user: user_schemas.User = Depends(get_current_user)):

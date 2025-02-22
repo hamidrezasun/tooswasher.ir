@@ -4,6 +4,7 @@ from database import Base, engine, get_db
 from routes.user import router as user_router
 from routes.product import router as product_router
 from routes.cart import router as cart_router
+from routes.category import router as category_router
 from crud.user import get_user_by_username, create_user
 from schemas.user import UserCreate
 from utils import get_password_hash
@@ -18,6 +19,7 @@ app = FastAPI()
 app.include_router(user_router)
 app.include_router(product_router)
 app.include_router(cart_router)
+app.include_router(category_router)
 
 def create_default_admin(db: Session):
     """Create a default admin user if it doesn't exist."""
