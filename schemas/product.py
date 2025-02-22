@@ -1,7 +1,12 @@
-# schemas/product.py
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict
 from schemas.category import Category
+
+class DiscountInfo(BaseModel):
+    id: int
+    code: str
+    percent: float
+    max_discount: Optional[float] = None
 
 class ProductBase(BaseModel):
     name: str
@@ -9,7 +14,7 @@ class ProductBase(BaseModel):
     price: float
     stock: int
     image: Optional[str] = None
-    category_id: int  # Now references a Category ID
+    category_id: int
     minimum_order: Optional[int] = 1
     rate: Optional[float] = None
 
@@ -17,7 +22,7 @@ class ProductCreate(ProductBase):
     pass
 
 class ProductUpdate(ProductBase):
-    name: Optional[str] = None  # Making all fields optional for partial updates
+    name: Optional[str] = None
     price: Optional[float] = None
     stock: Optional[int] = None
     category_id: Optional[int] = None
@@ -25,7 +30,8 @@ class ProductUpdate(ProductBase):
 class Product(ProductBase):
     id: int
     owner_id: int
-    category: Category  # Expects the full Category object
+    category: Category
+    discount: Optional[DiscountInfo] = None  # Include discount information
 
     class Config:
-       from_attributes = True
+        from_attributes = True

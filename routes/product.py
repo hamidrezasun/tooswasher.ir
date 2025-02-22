@@ -1,4 +1,3 @@
-# routers/product.py (assuming this is your router file)
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -25,12 +24,21 @@ def create_product(
         raise HTTPException(status_code=400, detail=str(e))
 
 @router.get("/", response_model=List[product_schemas.Product])
-def read_products(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    return product_crud.get_products(db, skip=skip, limit=limit)
+def read_products(
+    skip: int = 0,
+    limit: int = 100,
+    current_user: user_schemas.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    return product_crud.get_products(db, skip=skip, limit=limit, user_id=current_user.id)
 
 @router.get("/{product_id}", response_model=product_schemas.Product)
-def read_product(product_id: int, db: Session = Depends(get_db)):
-    product = product_crud.get_product(db, product_id=product_id)
+def read_product(
+    product_id: int,
+    current_user: user_schemas.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    product = product_crud.get_product(db, product_id=product_id, user_id=current_user.id)
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return product
