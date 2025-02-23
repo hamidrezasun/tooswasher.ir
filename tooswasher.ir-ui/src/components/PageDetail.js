@@ -22,7 +22,7 @@ const PageDetail = ({ page: propPage }) => {
     <div>
       <h2>{page.name}</h2>
       <p>{page.body}</p>
-      <p>In Menu: {page.is_in_menu ? 'Yes' : 'No'}</p>
+      {/* <p>In Menu: {page.is_in_menu ? 'Yes' : 'No'}</p> */}
     </div>
   );
 };

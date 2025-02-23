@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPage, updatePage } from '../api';
+import { GrapesjsReact } from 'grapesjs-react';
 
 const PageUpdate = ({ refreshMenu }) => {
   const { pageId } = useParams();
@@ -47,8 +48,12 @@ const PageUpdate = ({ refreshMenu }) => {
         </div>
         <div>
           <label>Body:</label>
-          <textarea
+          <GrapesjsReact
             value={body}
+            id="page-builder"
+            plugins={[]}
+            storageManager={{ autosave: false }}
+            canvas={{ styles: ['https://example.com/styles.css'] }}
             onChange={(e) => setBody(e.target.value)}
             required
           />

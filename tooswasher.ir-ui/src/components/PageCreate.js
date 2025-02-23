@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPage } from '../api';
+import 'grapesjs/dist/css/grapes.min.css';
+import { GrapesjsReact } from 'grapesjs-react';
 
 const PageCreate = ({ refreshMenu }) => {
   const [name, setName] = useState('');
@@ -35,8 +37,12 @@ const PageCreate = ({ refreshMenu }) => {
         </div>
         <div>
           <label>Body:</label>
-          <textarea
-            value={body}
+          <GrapesjsReact
+          value={body}
+            id="page-builder"
+            plugins={[]}
+            storageManager={{ autosave: false }}
+            canvas={{ styles: ['https://example.com/styles.css'] }}
             onChange={(e) => setBody(e.target.value)}
             required
           />

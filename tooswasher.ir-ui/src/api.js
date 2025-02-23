@@ -12,6 +12,18 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response.status === 401) {
+      // Handle unauthorized access
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+    }
+    return Promise.reject(error);
+  }
+);
+
 export const getPages = (skip = 0, limit = 100) =>
   api.get('/pages/', { params: { skip, limit } }).then((res) => res.data);
 

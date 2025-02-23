@@ -35,6 +35,16 @@ const Menu = ({ refreshKey }) => {
             Create Page
           </NavLink>
         </button>
+        <button className="menu-button">
+          <NavLink to="/login" activeClassName="active">
+            Login
+          </NavLink>
+        </button>
+        <button className="menu-button">
+          <NavLink to="/register" activeClassName="active">
+            Register
+          </NavLink>
+        </button>
         {error ? (
           <span className="menu-error">{error}</span>
         ) : (
