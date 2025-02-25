@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createPage } from '../api';
+import { createPage } from '../../api';
 import 'grapesjs/dist/css/grapes.min.css';
 import { GrapesjsReact } from 'grapesjs-react';
 

@@ -29,7 +29,7 @@ def create_page(
 
 @router.get(
     "/",
-    response_model=List[page_schemas.Page],
+    response_model=List[page_schemas.PageBase],
     status_code=status.HTTP_200_OK,
     summary="Read Pages",
 )

@@ -1,8 +1,5 @@
-import axios from 'axios';
-
-const api = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:8000',
-});
+import { api } from './api';
+import qs from 'qs'; // You might need to install this package for encoding data
 
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
@@ -27,8 +24,23 @@ api.interceptors.response.use(
 export const registerUser = (userData) =>
   api.post('/users/register', userData).then((res) => res.data);
 
-export const loginUser = (credentials) =>
-  api.post('/users/token', credentials).then((res) => res.data);
+export const loginUser = (credentials) => {
+  const data = qs.stringify({
+    username: credentials.username,
+    password: credentials.password
+  });
+
+  return api.post('/users/token', data, {
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded'
+    }
+  }).then((res) => {
+    if (res.data && res.data.access_token) {
+      setToken(res.data.access_token); // Assuming the token is returned in `access_token`
+    }
+    return res.data;
+  });
+};
 
 export const getUserProfile = () =>
   api.get('/users/me').then((res) => res.data);

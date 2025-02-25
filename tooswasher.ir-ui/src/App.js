@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Menu from './components/Menu';
-import PageList from './components/PageList';
-import PageCreate from './components/PageCreate';
-import PageUpdate from './components/PageUpdate';
-import PageDetail from './components/PageDetail';
+import PageList from './components/page/PageList';
+import PageCreate from './components/page/PageCreate';
+import PageUpdate from './components/page/PageUpdate';
+import PageDetail from './components/page/PageDetail';
 import Login from './components/Login';
 import Register from './components/Register';
 import { getPages } from './api';
@@ -32,10 +32,10 @@ const App = () => {
         <div className="content">
           <Routes>
             <Route path="/" element={<h1>Welcome</h1>} />
-            <Route path="/pages" element={<PageList refreshMenu={refreshMenu} />} />
-            <Route path="/create" element={<PageCreate refreshMenu={refreshMenu} />} />
-            <Route path="/pages/:pageId" element={<PageDetail />} />
-            <Route path="/update/:pageId" element={<PageUpdate refreshMenu={refreshMenu} />} />
+            <Route path="/page/pages" element={<PageList refreshMenu={refreshMenu} />} />
+            <Route path="/page/create" element={<PageCreate refreshMenu={refreshMenu} />} />
+            <Route path="/page/:pageId" element={<PageDetail />} />
+            <Route path="/page/update/:pageId" element={<PageUpdate refreshMenu={refreshMenu} />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             {/* Dynamic routes for pages with is_in_menu: true */}

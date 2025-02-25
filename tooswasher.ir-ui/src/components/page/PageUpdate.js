@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPage, updatePage } from '../api';
+import { getPage, updatePage } from '../../api';
 import { GrapesjsReact } from 'grapesjs-react';
 
 const PageUpdate = ({ refreshMenu }) => {

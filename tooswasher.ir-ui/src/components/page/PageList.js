@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getPages, deletePage } from '../api';
+import { getPages, deletePage } from '../../api';
 
 const PageList = ({ refreshMenu }) => {
   const [pages, setPages] = useState([]);
@@ -31,9 +31,9 @@ const PageList = ({ refreshMenu }) => {
       <ul>
         {pages.map((page) => (
           <li key={page.id}>
-            <Link to={`/pages/${page.id}`}>{page.name}</Link>
+            <Link to={`/page/${page.id}`}>{page.name}</Link>
             {' | '}
-            <Link to={`/update/${page.id}`}>Edit</Link>
+            <Link to={`/page/update/${page.id}`}>Edit</Link>
             {' | '}
             <button onClick={() => handleDelete(page.id)}>Delete</button>
           </li>
