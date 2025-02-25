@@ -1,15 +1,3 @@
-I’ve reviewed the repository at [https://github.com/hamidrezasun/tooswasher.ir/](https://github.com/hamidrezasun/tooswasher.ir/) and compared it with the `README.md` and instructions I provided earlier. The repo contains a FastAPI project with a different structure and feature set than what we’ve been building in this conversation. Below, I’ll adjust the `README.md` to match the actual content of the `tooswasher.ir` repository as of its latest state, ensuring accuracy for installation requirements and running with `python3 main.py`.
-
-The repository:
-- Uses FastAPI with SQLAlchemy and PostgreSQL (via `psycopg2`).
-- Implements products, categories, users, carts, orders, and authentication.
-- Does **not** include pages or blog posts (those were added in our conversation but aren’t in the repo).
-- Has a different file structure (`app/` directory instead of separate `crud/`, `models/`, etc.).
-
-Here’s the corrected `README.md`:
-
----
-
 # Tooswasher.ir API
 
 A FastAPI-based RESTful API for an e-commerce system, managing products, categories, users, shopping carts, and orders. Built with Python, SQLAlchemy, and Pydantic, this project provides a backend for an online store with JWT-based authentication.
