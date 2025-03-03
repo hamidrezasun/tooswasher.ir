@@ -1,5 +1,5 @@
 # crud/category.py
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from models.category import Category
 import schemas.category as category_schemas
 
@@ -11,10 +11,21 @@ def create_category(db: Session, category: category_schemas.CategoryCreate):
     return db_category
 
 def get_category(db: Session, category_id: int):
-    return db.query(Category).filter(Category.id == category_id).first()
+    return (
+        db.query(Category)
+        .options(joinedload(Category.subcategories))  # Load subcategories eagerly
+        .filter(Category.id == category_id)
+        .first()
+    )
 
 def get_categories(db: Session, skip: int = 0, limit: int = 100):
-    return db.query(Category).offset(skip).limit(limit).all()
+    return (
+        db.query(Category)
+        .options(joinedload(Category.subcategories))  # Load subcategories eagerly
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
 
 def update_category(db: Session, category_id: int, category: category_schemas.CategoryCreate):
     db_category = db.query(Category).filter(Category.id == category_id).first()

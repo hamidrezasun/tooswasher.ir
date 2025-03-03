@@ -1,4 +1,3 @@
-# routers/category.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List
@@ -24,6 +23,13 @@ def create_category(
     existing_category = db.query(Category).filter(Category.name == category.name).first()
     if existing_category:
         raise HTTPException(status_code=400, detail="Category with this name already exists")
+    
+    # Check if parent_id is valid (if provided)
+    if category.parent_id is not None:
+        parent_category = db.query(Category).filter(Category.id == category.parent_id).first()
+        if not parent_category:
+            raise HTTPException(status_code=404, detail="Parent category not found")
+    
     return category_crud.create_category(db=db, category=category)
 
 @router.get("/", response_model=List[category_schemas.Category])
@@ -52,9 +58,11 @@ def update_category(
     current_user: user_schemas.User = Depends(auth.get_current_admin_user),
     db: Session = Depends(get_db)
 ):
-    updated_category = category_crud.update_category(db, category_id=category_id, category=category)
-    if updated_category is None:
+    # Check if the category exists
+    db_category = db.query(Category).filter(Category.id == category_id).first()
+    if not db_category:
         raise HTTPException(status_code=404, detail="Category not found")
+    
     # Check if new name conflicts with existing categories
     existing_category = db.query(Category).filter(
         Category.name == category.name,
@@ -62,6 +70,14 @@ def update_category(
     ).first()
     if existing_category:
         raise HTTPException(status_code=400, detail="Category with this name already exists")
+    
+    # Check if parent_id is valid (if provided)
+    if category.parent_id is not None:
+        parent_category = db.query(Category).filter(Category.id == category.parent_id).first()
+        if not parent_category:
+            raise HTTPException(status_code=404, detail="Parent category not found")
+    
+    updated_category = category_crud.update_category(db, category_id=category_id, category=category)
     return updated_category
 
 @router.delete("/{category_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -78,6 +94,15 @@ def delete_category(
             status_code=400,
             detail="Cannot delete category that is in use by products"
         )
+    
+    # Check if category has subcategories
+    subcategory_count = db.query(Category).filter(Category.parent_id == category_id).count()
+    if subcategory_count > 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot delete category that has subcategories"
+        )
+    
     deleted_category = category_crud.delete_category(db, category_id=category_id)
     if deleted_category is None:
         raise HTTPException(status_code=404, detail="Category not found")

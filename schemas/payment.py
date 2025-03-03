@@ -20,4 +20,4 @@ class PaymentUpdate(BaseModel):
     payment_method: Optional[PaymentMethod] = None
 
     class Config:
-        orm_mode = True
+        rom_attributes = True 
