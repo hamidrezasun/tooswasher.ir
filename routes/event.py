@@ -15,10 +15,6 @@ router = APIRouter(
     tags=["events"]
 )
 
-def check_admin(user: user_schemas.User):
-    if user.role != RoleEnum.admin.value:
-        raise HTTPException(status_code=403, detail="Only admins can perform this action")
-
 def check_admin_or_participant(event: Event, user: user_schemas.User):
     if (user.role != RoleEnum.admin.value and 
         user.id != event.admin_id and 
@@ -106,7 +102,6 @@ def delete_event(
     db_event = db.query(Event).filter((Event.id == event_id) & (Event.admin == current_user.id)).first()
     if not db_event:
         raise HTTPException(status_code=404, detail="Event not found")
-    check_admin(current_user)
     if db_event.activities:
         raise HTTPException(
             status_code=400,
@@ -182,6 +177,5 @@ def delete_event_activity(
     db_activity = db.query(EventActivity).filter(EventActivity.id == activity_id).first()
     if not db_activity or db_activity.event_id != event_id:
         raise HTTPException(status_code=404, detail="Activity not found")
-    check_admin(current_user)
     event_crud.delete_event_activity(db, activity_id=activity_id)
     return None
