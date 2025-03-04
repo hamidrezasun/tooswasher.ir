@@ -10,6 +10,7 @@ from routes.category import router as category_router
 from routes.order import router as order_router
 from routes.discount import router as discount_router
 from routes.payment import router as payment_router
+from routes.event import router as event_router
 from crud.user import get_user_by_username, create_user
 from schemas.user import UserCreate
 from contextlib import asynccontextmanager
@@ -32,7 +33,6 @@ app = FastAPI(
     },
     lifespan=lifespan
 )
-
 # Include routers
 app.include_router(user_router)
 app.include_router(product_router)
@@ -42,6 +42,7 @@ app.include_router(page_router)
 app.include_router(order_router)
 app.include_router(discount_router)
 app.include_router(payment_router)
+app.include_router(event_router)
 
 def create_default_admin():
     """Create a default admin user if it doesn't exist."""

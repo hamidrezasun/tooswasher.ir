@@ -1,7 +1,8 @@
+# crud/user.py
 from sqlalchemy.orm import Session
 from models.user import User, RoleEnum
 import schemas.user as user_schemas
-from utils import get_password_hash,verify_password
+from utils import get_password_hash, verify_password
 import secrets
 from datetime import datetime, timedelta
 
@@ -10,11 +11,9 @@ def generate_reset_token(db: Session, email: str):
     if not user:
         raise ValueError("User not found")
     
-    # Generate a secure token
     reset_token = secrets.token_urlsafe(32)
-    reset_token_expires = datetime.utcnow() + timedelta(hours=1)  # Token expires in 1 hour
+    reset_token_expires = datetime.utcnow() + timedelta(hours=1)
     
-    # Save the token and expiration time in the database
     user.reset_token = reset_token
     user.reset_token_expires = reset_token_expires
     db.commit()
@@ -32,10 +31,7 @@ def reset_password(db: Session, reset_token: str, new_password: str):
     if not user:
         raise ValueError("Invalid or expired reset token")
     
-    # Hash the new password
     user.hashed_password = get_password_hash(new_password)
-    
-    # Clear the reset token and expiration time
     user.reset_token = None
     user.reset_token_expires = None
     
@@ -52,7 +48,7 @@ def get_user_by_email(db: Session, email: str):
 def get_user_by_national_id(db: Session, national_id: str):
     return db.query(User).filter(User.national_id == national_id).first()
 
-def get_user_by_id(db: Session, user_id: int):  # New function
+def get_user_by_id(db: Session, user_id: int):
     return db.query(User).filter(User.id == user_id).first()
 
 def create_user(db: Session, user: user_schemas.UserCreate):
@@ -61,6 +57,8 @@ def create_user(db: Session, user: user_schemas.UserCreate):
         username=user.username,
         email=user.email,
         hashed_password=hashed_password,
+        name=user.name,  # Added name
+        last_name=user.last_name,  # Added last_name
         role=RoleEnum.customer,
         national_id=user.national_id,
         address=user.address,
@@ -73,7 +71,7 @@ def create_user(db: Session, user: user_schemas.UserCreate):
     db.refresh(db_user)
     return db_user
 
-def update_user_role(db: Session, user_id: int, role: RoleEnum):  # New function
+def update_user_role(db: Session, user_id: int, role: RoleEnum):
     db_user = get_user_by_id(db, user_id)
     if not db_user:
         raise ValueError("User not found")
@@ -87,15 +85,12 @@ def update_user_password(db: Session, user_id: int, old_password: str, new_passw
     if not user:
         raise ValueError("User not found")
     
-    # Verify the old password
     if not verify_password(old_password, user.hashed_password):
         raise ValueError("Old password is incorrect")
     
-    # Prevent users from setting the same password
     if old_password == new_password:
         raise ValueError("New password cannot be the same as the old password")
     
-    # Hash the new password and update
     user.hashed_password = get_password_hash(new_password)
     
     db.commit()
@@ -107,9 +102,12 @@ def update_user(db: Session, user_id: int, user_update: user_schemas.UserUpdate)
     if not user:
         raise ValueError("User not found")
 
-    # Update only the provided fields
     if user_update.email:
         user.email = user_update.email
+    if user_update.name:  # Added name
+        user.name = user_update.name
+    if user_update.last_name:  # Added last_name
+        user.last_name = user_update.last_name
     if user_update.address:
         user.address = user_update.address
     if user_update.state:

@@ -1,3 +1,4 @@
+# routes/user.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
@@ -39,7 +40,6 @@ def login_for_access_token(
             headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=auth.ACCESS_TOKEN_EXPIRE_MINUTES)
-    # Ensure the latest role from the database is used
     access_token = auth.create_access_token(
         data={"sub": user.username, "role": user.role.value},
         expires_delta=access_token_expires
@@ -81,15 +81,9 @@ async def request_password_reset(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     
-    # Generate a reset token
     reset_token = user_crud.generate_reset_token(db, email)
-    
-    # Send the reset token via email (optional)
-    # send_reset_email(email, reset_token)
-    
     return {"message": "Password reset token generated", "reset_token": reset_token}
 
-# New Endpoint: Reset Password
 @router.post("/reset-password")
 async def reset_password(
     reset_data: user_schemas.ResetPassword,
@@ -100,15 +94,11 @@ async def reset_password(
         if not user:
             raise HTTPException(status_code=400, detail="Invalid or expired reset token")
         
-        # Update the user's password
         user_crud.reset_password(db, reset_data.reset_token, reset_data.new_password)
-        
         return {"message": "Password reset successfully"}
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
-    
 
-### Change Password ###
 @router.put("/change-password", response_model=user_schemas.MessageResponse)
 async def change_password(
     password_data: user_schemas.ChangePassword,
@@ -121,8 +111,7 @@ async def change_password(
     if password_data.old_password == password_data.new_password:
         raise HTTPException(status_code=400, detail="New password cannot be the same as old password")
 
-    user_crud.update_user_password(db, current_user.id, password_data.old_password,password_data.new_password)
-    
+    user_crud.update_user_password(db, current_user.id, password_data.old_password, password_data.new_password)
     return {"message": "Password changed successfully"}
 
 @router.put("/edit", response_model=user_schemas.User)
