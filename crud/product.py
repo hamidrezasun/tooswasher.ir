@@ -49,38 +49,6 @@ def get_product(db: Session, product_id: int, user_id: int = None):
     
     return product
 
-def get_products(db: Session, skip: int = 0, limit: int = 100, user_id: int = None):
-    """
-    Retrieve a list of products, including applicable discounts for the user (if any).
-    """
-    products = db.query(Product).options(joinedload(Product.category)).offset(skip).limit(limit).all()
-    
-    for product in products:
-        # Check for applicable discount for the product and user
-        discount = None
-        if user_id:
-            discount = (
-                db.query(Discount)
-                .filter(
-                    (Discount.product_id == product.id) | (Discount.product_id.is_(None)),
-                    (Discount.customer_id == user_id) | (Discount.customer_id.is_(None))
-                )
-                .first()
-            )
-        
-        # Add discount information to the product object
-        if discount:
-            product.discount = {
-                "id": discount.id,
-                "code": discount.code,
-                "percent": discount.percent,
-                "max_discount": discount.max_discount
-            }
-        else:
-            product.discount = None
-    
-    return products
-
 def update_product(db: Session, product_id: int, product: product_schemas.ProductUpdate):
     db_product = db.query(Product).filter(Product.id == product_id).first()
     if not db_product:
