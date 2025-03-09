@@ -1,4 +1,3 @@
-# models/order.py
 from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime, String, Table
 from sqlalchemy.orm import relationship
 from database import Base
@@ -21,13 +20,12 @@ class Order(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     total_amount = Column(Float, nullable=False) 
-    status = Column(String, default="Pending")
-    state = Column(String, nullable=True)
-    city = Column(String, nullable=True)
-    address = Column(String, nullable=True)
-    phone_number = Column(String, nullable=True)
+    status = Column(String(50), default="Pending")  # Added length
+    state = Column(String(50), nullable=True)  # Added length
+    city = Column(String(50), nullable=True)  # Added length
+    address = Column(String(255), nullable=True)  # Added length
+    phone_number = Column(String(20), nullable=True)  # Added length
     created_at = Column(DateTime, default=datetime.datetime.utcnow)
-    # Removed discount_id from Order level since it's now per item
     
     user = relationship("User")
     products = relationship(
@@ -35,9 +33,7 @@ class Order(Base):
         secondary=order_product,
         backref="orders"
     )
-    # Removed direct discount relationship from Order since it's now in order_product
 
-    # Optional: Add a property to get all discounts used in this order
     @property
     def discounts(self):
         discounts = set()

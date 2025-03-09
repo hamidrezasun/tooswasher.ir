@@ -1,3 +1,4 @@
+# routers/product.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from typing import List, Optional
@@ -23,7 +24,7 @@ def create_product(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
-@router.get("/", response_model=List[product_schemas.Product], description="Retrieve a list of products. This endpoint is public, but discounts are applied if the user is logged in.")
+@router.get("/", response_model=List[product_schemas.Product], description="Retrieve a list of products. Discounts are included for logged-in users.")
 def read_products(
     skip: int = 0,
     limit: int = 100,
@@ -33,7 +34,7 @@ def read_products(
     user_id = current_user.id if current_user else None
     return product_crud.get_products(db, skip=skip, limit=limit, user_id=user_id)
 
-@router.get("/{product_id}", response_model=product_schemas.Product, description="Retrieve a product by its ID. This endpoint is public, but discounts are applied if the user is logged in.")
+@router.get("/{product_id}", response_model=product_schemas.Product, description="Retrieve a product by its ID. Discounts are included for logged-in users.")
 def read_product(
     product_id: int,
     current_user: Optional[user_schemas.User] = Depends(auth.get_current_user_optional),

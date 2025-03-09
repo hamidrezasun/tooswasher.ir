@@ -6,7 +6,7 @@ class Discount(Base):
     __tablename__ = "discounts"
 
     id = Column(Integer, primary_key=True, index=True)
-    code = Column(String, unique=True, index=True, nullable=True)  # Unique discount code
+    code = Column(String(50), unique=True, index=True, nullable=True)  # Added length
     percent = Column(Float)  # Discount percentage (e.g., 10.5 for 10.5%)
     max_discount = Column(Float, nullable=True)  # Maximum discount amount (e.g., 50.0 for $50)
     product_id = Column(Integer, ForeignKey("products.id"), nullable=True)  # Optional link to specific product

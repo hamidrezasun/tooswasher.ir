@@ -1,3 +1,4 @@
+# auth.py
 from datetime import datetime, timedelta
 from jose import JWTError, jwt
 from fastapi.security import OAuth2PasswordBearer
@@ -9,11 +10,11 @@ from database import get_db
 from utils import verify_password
 from typing import Optional
 
-SECRET_KEY = "your-secret-key-here"
+SECRET_KEY = "your-secret-key-here"  # Replace with a secure key!
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token", auto_error=False)  # Disable auto-error
 
 def authenticate_user(db: Session, username: str, password: str):
     user = get_user_by_username(db, username)
@@ -40,6 +41,8 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    if not token:
+        raise credentials_exception
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get("sub")
@@ -54,10 +57,10 @@ async def get_current_user(
     return user
 
 async def get_current_user_optional(
-    token: Optional[str] = Depends(oauth2_scheme),
+    token: Optional[str] = Depends(oauth2_scheme),  # Use OAuth2PasswordBearer with auto_error=False
     db: Session = Depends(get_db)
 ) -> Optional[user_schemas.User]:
-    if not token:
+    if not token:  # No token provided, return None (unauthenticated)
         return None
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -68,7 +71,7 @@ async def get_current_user_optional(
     except JWTError:
         return None
     user = get_user_by_username(db, username=token_data.username)
-    return user
+    return user if user else None
 
 async def get_current_active_user(current_user: user_schemas.User = Depends(get_current_user)):
     if not current_user.is_active:
@@ -76,7 +79,6 @@ async def get_current_active_user(current_user: user_schemas.User = Depends(get_
     return current_user
 
 async def get_current_admin_user(current_user: user_schemas.User = Depends(get_current_user)):
-    # Compare role values as strings to avoid enum type mismatch
     if not current_user.is_active or current_user.role.value != user_schemas.RoleEnum.admin.value:
         raise HTTPException(status_code=403, detail="Admin access required")
     return current_user

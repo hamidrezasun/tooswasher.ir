@@ -1,4 +1,3 @@
-# models/event.py
 from sqlalchemy import Column, Integer, String, Text, Boolean, DateTime, Date, ForeignKey, Table
 from sqlalchemy.orm import relationship
 from database import Base
@@ -23,14 +22,14 @@ class Event(Base):
     __tablename__ = "events"
 
     id = Column(Integer, primary_key=True, index=True, autoincrement=True)
-    subject = Column(String(200), nullable=False)
+    subject = Column(String(200), nullable=False)  # Added length
     priority = Column(Integer, nullable=False)
     admin_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow, nullable=False)
     deadline = Column(Date, nullable=True)
     status = Column(Boolean, default=True, nullable=False)
     special = Column(Text, nullable=True)
-    attach = Column(String, nullable=True)
+    attach = Column(String(255), nullable=True)  # Added length
 
     admin = relationship("User", foreign_keys=[admin_id])
     staff = relationship("User", secondary="event_staff")
@@ -45,7 +44,7 @@ class EventActivity(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     date = Column(DateTime, default=datetime.utcnow, nullable=False)
     content = Column(Text, nullable=False)
-    attach = Column(String, nullable=True)
+    attach = Column(String(255), nullable=True)  # Added length
     important = Column(Boolean, default=False, nullable=False)
 
     event = relationship("Event", back_populates="activities")

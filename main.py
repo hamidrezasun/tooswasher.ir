@@ -18,11 +18,6 @@ from contextlib import asynccontextmanager
 # Create database tables
 Base.metadata.create_all(bind=engine)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    print("Starting up...")
-    yield
-    print("Shutting down...")
 
 app = FastAPI(
     title="طوس واشر",
@@ -31,7 +26,6 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
-    lifespan=lifespan
 )
 # Include routers
 app.include_router(user_router)
@@ -69,9 +63,6 @@ def create_default_admin():
             db_user.role = "admin"  # Assuming User model has a 'role' column
             db.commit()
             db.refresh(db_user)
-            print(f"Default admin created: username={admin_username}, password={admin_password}")
-        else:
-            print("Default admin already exists")
     finally:
         db.close()
 
