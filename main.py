@@ -13,7 +13,7 @@ from routes.payment import router as payment_router
 from routes.event import router as event_router
 from crud.user import get_user_by_username, create_user
 from schemas.user import UserCreate
-from contextlib import asynccontextmanager
+from fastapi.middleware.cors import CORSMiddleware
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -26,6 +26,13 @@ app = FastAPI(
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
+)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://192.168.1.37:3000"],  # Allow your React frontend origin
+    allow_credentials=True,
+    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
+    allow_headers=["*"],  # Allow all headers
 )
 # Include routers
 app.include_router(user_router)

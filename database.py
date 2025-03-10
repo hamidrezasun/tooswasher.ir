@@ -10,7 +10,7 @@ SQLALCHEMY_DATABASE_URL = "mysql+mysqldb://root:esp8266/32lumk59PZMW%40@localhos
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
 # Session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine,expire_on_commit=False)
 
 # Base class for models
 Base = declarative_base()

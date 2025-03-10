@@ -91,3 +91,19 @@ def delete_page(
     if deleted_page is None:
         raise HTTPException(status_code=404, detail="Page not found")
     return None
+
+@router.get(
+    "/search/",
+    response_model=List[page_schemas.PageBase],
+    status_code=status.HTTP_200_OK,
+    summary="Search Pages by Name",
+)
+def search_pages(
+    query: str,
+    skip: int = 0,
+    limit: int = 100,
+    db: Session = Depends(get_db),
+):
+    """Search pages by name."""
+    pages = page_crud.search_pages_by_name(db, query=query, skip=skip, limit=limit)
+    return pages

@@ -16,3 +16,4 @@ class Product(Base):
     category = relationship("Category")  # Define relationship here
     minimum_order = Column(Integer, default=1)  # Added minimum order with default value of 1
     rate = Column(Float, nullable=True)  # Added rate, allowing null values
+    

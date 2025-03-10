@@ -71,3 +71,16 @@ def delete_product(
     if deleted_product is None:
         raise HTTPException(status_code=404, detail="Product not found")
     return None
+
+@router.get("/search/", response_model=List[product_schemas.ProductBase], description="Search products by name.")
+def search_products(
+    query: str,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: Optional[user_schemas.User] = Depends(auth.get_current_user_optional),
+    db: Session = Depends(get_db)
+):
+    """Search products by name."""
+    user_id = current_user.id if current_user else None
+    products = product_crud.search_products_by_name(db, query=query, skip=skip, limit=limit, user_id=user_id)
+    return products

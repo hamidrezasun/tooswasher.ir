@@ -105,3 +105,29 @@ def delete_product(db: Session, product_id: int):
     db.delete(db_product)
     db.commit()
     return db_product
+
+def search_products_by_name(db: Session, query: str, skip: int = 0, limit: int = 100, user_id: int = None):
+    """Search products by name."""
+    products = db.query(Product).filter(
+        Product.name.ilike(f"%{query}%")  # Case-insensitive search
+    ).options(joinedload(Product.category)).offset(skip).limit(limit).all()
+    
+    if user_id:
+        for product in products:
+            discount = db.query(Discount).filter(
+                (Discount.product_id == product.id) | (Discount.product_id.is_(None)),
+                (Discount.customer_id == user_id) | (Discount.customer_id.is_(None))
+            ).first()
+            if discount:
+                product.discount = {
+                    "id": discount.id,
+                    "code": discount.code,
+                    "percent": discount.percent,
+                    "max_discount": discount.max_discount
+                }
+            else:
+                product.discount = None
+    else:
+        for product in products:
+            product.discount = None
+    return products

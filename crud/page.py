@@ -48,4 +48,10 @@ def delete_page(db: Session, page_id: int):
         return None
     db.delete(db_page)
     db.commit()
-    return None  # Explicitly return None for 204 No Content
+    return None  # Explicitly return None for 204 No 
+
+def search_pages_by_name(db: Session, query: str, skip: int = 0, limit: int = 100):
+    """Search pages by name."""
+    return db.query(Page).filter(
+        Page.name.ilike(f"%{query}%")  # Case-insensitive search
+    ).offset(skip).limit(limit).all()
