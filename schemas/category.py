@@ -19,4 +19,3 @@ class Category(CategoryBase):
         from_attributes = True  # Enables ORM mode for Pydantic
 
 # This is necessary to support recursive models (categories with subcategories)
-Category.model_rebuild()
