@@ -4,8 +4,10 @@ from sqlalchemy.orm import sessionmaker
 
 # MySQL database URL
 # Format: "mysql+pymysql://root:esp8266/32lumk59PZMW@@localhost:3306/ecommerce"
-SQLALCHEMY_DATABASE_URL = "mysql+mysqldb://root:esp8266/32lumk59PZMW%40@localhost:3306/ecommerce"
-
+#SQLALCHEMY_DATABASE_URL = "mysql+mysqldb://root:esp8266/32lumk59PZMW%40@localhost:3306/ecommerce"
+# SQLite database URL
+# Format: "sqlite:///./your_database_file.db"
+SQLALCHEMY_DATABASE_URL = "sqlite:///./ecommerce.db"
 # Create the engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 
