@@ -12,16 +12,46 @@ services:
     env_file:
       - ./mysql/local.env
     tty: true
+
   api:
     depends_on:
       - mysql
     container_name: fast_api
     platform: linux/x86_64
     build:
-      context: ./
+      context: ./api  # Update this to the correct path if needed
     restart: unless-stopped
     tty: true
     volumes:
-      - ./:/app
+      - ./api:/app  # Update this to the correct path if needed
     ports:
       - 8000:8000
+
+  web:
+    depends_on:
+      - api
+    container_name: web
+    build: ./ui/
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./ui:/app
+      - ./ui/node_modules:/app/node_modules
+    environment:
+      NODE_ENV: development
+    stdin_open: true
+    tty: true
+    command: npm start
+
+  reverse-proxy:
+    image: nginx:latest
+    container_name: reverse-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/certs:/etc/nginx/certs
+    depends_on:
+      - api
+      - web
