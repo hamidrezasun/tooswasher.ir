@@ -23,5 +23,5 @@ COPY . .
 # Expose the port the app runs on
 EXPOSE 8000
 
-# Command to run the application with Gunicorn
+# Command to run the application with fastapi
 CMD ["fastapi", "run", "main.py","--bind", "0.0.0.0:8000", "--workers", "4"]

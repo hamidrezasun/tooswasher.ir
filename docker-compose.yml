@@ -41,8 +41,8 @@ services:
     image: nginx:alpine
     container_name: nginx_proxy
     ports:
-      - "80:801"
-      - "443:4431"
+      - "801:80"
+      - "4431:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # Link existing Nginx config
       - ./certbot/conf:/etc/letsencrypt
