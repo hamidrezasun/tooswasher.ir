@@ -7,3 +7,4 @@ sqlalchemy
 pydantic
 python-multipart
 mysqlclient
+httpx
