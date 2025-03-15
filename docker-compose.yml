@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: mysql:8.0
+    image: docker.arvancloud.ir/mysql:8.0
     container_name: mysql_db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -38,7 +38,7 @@ services:
       - app-network
 
   nginx:
-    image: nginx:alpine
+    image: docker.arvancloud.ir/nginx:alpine
     container_name: nginx_proxy
     ports:
       - "80:80"
@@ -55,7 +55,7 @@ services:
       - app-network
 
   certbot:
-    image: certbot/certbot
+    image: docker.arvancloud.ir/certbot/certbot
     container_name: certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
