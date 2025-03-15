@@ -55,7 +55,7 @@ services:
       - app-network
 
   certbot:
-    image: docker.arvancloud.ir/certbot/certbot
+    image: certbot/certbot
     container_name: certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt
