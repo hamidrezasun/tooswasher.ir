@@ -5,11 +5,12 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install system dependencies for MySQLDB
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && \
+    apt-get install -y \
     default-libmysqlclient-dev \
     gcc \
-    mysql-client \  # Install MySQL client for the wait script
-    && rm -rf /var/lib/apt/lists/*
+    default-mysql-client && \  # Use default-mysql-client instead of mysql-client
+    rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
 COPY requirements.txt .
