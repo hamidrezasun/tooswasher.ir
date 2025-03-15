@@ -1,57 +1,73 @@
-version: "3"
+version: '3.8'
+
 services:
-  mysql:
-    container_name: mysql
-    platform: linux/x86_64
-    build: ./mysql/
-    ports:
-      - "3306:3306"
-    volumes:
-      - ./mysql/db:/docker-entrypoint-initdb.d
-      - ./mysql/conf.d:/etc/mysql/conf.d
-    env_file:
-      - ./mysql/local.env
-    tty: true
-
-  api:
-    depends_on:
-      - mysql
-    container_name: fast_api
-    platform: linux/x86_64
-    build:
-      context: ./api  # Update this to the correct path if needed
-    restart: unless-stopped
-    tty: true
-    volumes:
-      - ./api:/app  # Update this to the correct path if needed
-    ports:
-      - 8000:8000
-
-  web:
-    depends_on:
-      - api
-    container_name: web
-    build: ./ui/
-    ports:
-      - "3000:3000"
-    volumes:
-      - ./ui:/app
-      - ./ui/node_modules:/app/node_modules
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
     environment:
-      NODE_ENV: development
-    stdin_open: true
-    tty: true
-    command: npm start
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    volumes:
+      - ./mysql/data:/var/lib/mysql  # Persist MySQL data
+    networks:
+      - app-network
 
-  reverse-proxy:
-    image: nginx:latest
-    container_name: reverse-proxy
+  backend:
+    build: ./backend
+    container_name: fastapi_backend
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      SECRET_KEY: ${SECRET_KEY}
+    depends_on:
+      - db
+    volumes:
+      - ./backend:/app  # Link existing backend directory
+    networks:
+      - app-network
+
+  frontend:
+    build: ./ui
+    container_name: react_frontend
+    volumes:
+      - ./ui:/app  # Link existing UI directory
+    networks:
+      - app-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_proxy
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/certs:/etc/nginx/certs
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf  # Link existing Nginx config
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+      - ./ui/build:/usr/share/nginx/html  # Link React build files
     depends_on:
-      - api
-      - web
+      - backend
+      - frontend
+    networks:
+      - app-network
+
+  certbot:
+    image: certbot/certbot
+    container_name: certbot
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - app-network
+
+volumes:
+  certbot-conf:
+  certbot-www:
+
+networks:
+  app-network:
+    driver: bridge
