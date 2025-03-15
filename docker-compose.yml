@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: docker.arvancloud.ir/mysql:8.0
+    image: mysql:8.0
     container_name: mysql_db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -38,7 +38,7 @@ services:
       - app-network
 
   nginx:
-    image: docker.arvancloud.ir/nginx:alpine
+    image: nginx:alpine
     container_name: nginx_proxy
     ports:
       - "80:801"
