@@ -1,16 +1,14 @@
-#!/bin/sh
-# wait-for-mysql.sh
-
+#!/bin/bash
 set -e
 
 host="$1"
 shift
 cmd="$@"
 
-until mysql -h "$host" -u "${MYSQL_USER}" -p"${MYSQL_PASSWORD}" -e 'SELECT 1'; do
-  >&2 echo "MySQL is unavailable - sleeping"
-  sleep 1
+until mysqladmin ping -h"$host" -u"$MYSQL_USER" -p"$MYSQL_PASSWORD" --silent; do
+    echo "Waiting for MySQL to be ready..."
+    sleep 2
 done
 
->&2 echo "MySQL is up - executing command"
+echo "MySQL is up - executing command"
 exec $cmd

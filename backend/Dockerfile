@@ -25,8 +25,9 @@ RUN pip install --no-cache-dir -r requirements.txt --default-timeout=100
 # Copy the current directory contents into the container
 COPY . .
 
-# Copy the wait script
+# Copy the wait script and make it executable
 COPY wait-for-mysql.sh /app/wait-for-mysql.sh
+RUN chmod +x /app/wait-for-mysql.sh
 
 # Expose the port the app runs on
 EXPOSE 8000
