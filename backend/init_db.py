@@ -10,10 +10,6 @@ logger = logging.getLogger(__name__)
 INIT_FLAG = "/app/.init_done"
 
 def initialize_app():
-    if os.path.exists(INIT_FLAG):
-        logger.info("Application already initialized, skipping setup")
-        return
-
     logger.info("Initializing application...")
     try:
         Base.metadata.create_all(bind=engine, checkfirst=True)
@@ -21,7 +17,9 @@ def initialize_app():
     except Exception as e:
         logger.error(f"Error during table creation: {e}")
         return
-
+    if os.path.exists(INIT_FLAG):
+        logger.info("Application already initialized, skipping setup")
+        return
     db = SessionLocal()
     try:
         admin_username = "admin"
