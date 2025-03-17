@@ -16,10 +16,6 @@ from crud.user import get_user_by_username, create_user
 from schemas.user import UserCreate
 from fastapi.middleware.cors import CORSMiddleware
 
-# Create database tables
-Base.metadata.create_all(bind=engine)
-
-
 app = FastAPI(
     title="طوس واشر",
     version="0.1",
@@ -28,13 +24,16 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
+
+# Add CORS middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow your React frontend origin
+    allow_origins=["*"],  # Adjust to specific origins in production (e.g., "http://tooswasher.ir")
     allow_credentials=True,
-    allow_methods=["*"],  # Allow all methods (GET, POST, etc.)
-    allow_headers=["*"],  # Allow all headers
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
+
 # Include routers
 app.include_router(user_router)
 app.include_router(product_router)
@@ -47,13 +46,15 @@ app.include_router(payment_router)
 app.include_router(event_router)
 app.include_router(file_router)
 
+# Create database tables if they don’t exist
+Base.metadata.create_all(bind=engine, checkfirst=True)
+
 def create_default_admin():
-    """Create a default admin user if it doesn't exist."""
+    """Create a default admin user if it doesn’t exist."""
     admin_username = "admin"
     admin_email = "admin@example.com"
     admin_password = "1234"  # Change this in production!
     
-    # Use a session instance
     db = SessionLocal()
     try:
         existing_admin = get_user_by_username(db, admin_username)

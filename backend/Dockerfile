@@ -13,8 +13,8 @@ RUN apt-get update && \
     pkg-config && \
     rm -rf /var/lib/apt/lists/*
 
-# Upgrade pip to the latest version
-RUN pip install --upgrade pip
+# Upgrade pip to the latest version with retry logic
+RUN for i in {1..5}; do pip install --upgrade pip --default-timeout=100 && break || sleep 5; done
 
 # Copy the requirements file into the container
 COPY requirements.txt .
