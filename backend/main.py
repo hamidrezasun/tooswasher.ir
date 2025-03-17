@@ -17,6 +17,7 @@ from fastapi.middleware.cors import CORSMiddleware
 import logging
 import asyncio
 import os
+import time
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -53,11 +54,13 @@ INIT_FLAG = "/app/.init_done"
 startup_lock = asyncio.Lock()
 
 async def initialize_app():
+    # Early check to reduce redundant attempts
     if os.path.exists(INIT_FLAG):
         logger.info("Application already initialized, skipping setup")
         return
 
     async with startup_lock:
+        # Double-check inside lock
         if os.path.exists(INIT_FLAG):
             logger.info("Application already initialized by another worker, skipping setup")
             return
@@ -92,10 +95,13 @@ async def initialize_app():
             else:
                 logger.info("Admin user already exists, skipping creation")
 
+            # Write flag after success
             with open(INIT_FLAG, "w") as f:
                 f.write("done")
         except Exception as e:
             logger.error(f"Error during initialization: {e}")
+            # Small delay to avoid immediate retries in other workers
+            time.sleep(1)
         finally:
             db.close()
 
