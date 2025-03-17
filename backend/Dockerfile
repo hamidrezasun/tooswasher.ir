@@ -33,4 +33,4 @@ RUN chmod +x /app/wait-for-mysql.sh
 EXPOSE 8000
 
 # Command to run the application with the wait script
-CMD ["./wait-for-mysql.sh", "db", "gunicorn", "main:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker"]
+CMD ["./wait-for-mysql.sh", "db","python init_db.py" , "gunicorn", "main:app", "--bind", "0.0.0.0:8000", "--workers", "4", "--worker-class", "uvicorn.workers.UvicornWorker"]
