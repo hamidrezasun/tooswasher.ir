@@ -16,6 +16,7 @@ from crud.user import get_user_by_username, create_user
 from schemas.user import UserCreate
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+import asyncio
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -48,14 +49,22 @@ app.include_router(payment_router)
 app.include_router(event_router)
 app.include_router(file_router)
 
+# Use a lock to ensure startup runs only once
+startup_lock = asyncio.Lock()
+
 @app.on_event("startup")
 async def startup_event():
-    logger.info("Application starting up...")
-    Base.metadata.create_all(bind=engine, checkfirst=True)
-    logger.info("Database tables checked/created successfully")
-    create_default_admin()
+    async with startup_lock:
+        logger.info("Application starting up...")
+        try:
+            Base.metadata.create_all(bind=engine, checkfirst=True)
+            logger.info("Database tables checked/created successfully")
+        except Exception as e:
+            logger.error(f"Error during table creation: {e}")
+            # Don’t re-raise; let the app continue
+        await create_default_admin()
 
-def create_default_admin():
+async def create_default_admin():
     """Create a default admin user if it doesn’t exist."""
     admin_username = "admin"
     admin_email = "admin@example.com"
@@ -88,4 +97,4 @@ def create_default_admin():
         db.close()
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="0.0.0.0", port=8008) 
+    uvicorn.run(app, host="0.0.0.0", port=8008)
