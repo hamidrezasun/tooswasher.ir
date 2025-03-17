@@ -41,6 +41,8 @@ services:
   nginx:
     image: nginx:alpine
     container_name: nginx_proxy
+    environment:
+      - DOMAIN=${DOMAIN}
     ports:
       - "801:80"
       - "4431:443"
