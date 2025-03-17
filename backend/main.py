@@ -17,6 +17,7 @@ from schemas.user import UserCreate
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 import asyncio
+import os
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -51,33 +52,30 @@ app.include_router(file_router)
 
 # Use a lock to ensure startup runs only once
 startup_lock = asyncio.Lock()
+INIT_FLAG = "/app/.init_done"  # File to mark initialization
 
-@app.on_event("startup")
-async def startup_event():
-    async with startup_lock:
-        logger.info("Application starting up...")
-        try:
-            Base.metadata.create_all(bind=engine, checkfirst=True)
-            logger.info("Database tables checked/created successfully")
-        except Exception as e:
-            logger.error(f"Error during table creation: {e}")
-            # Don’t re-raise; let the app continue
-        await create_default_admin()
+async def initialize_app():
+    """Run one-time initialization tasks."""
+    if os.path.exists(INIT_FLAG):
+        logger.info("Application already initialized, skipping setup")
+        return
 
-async def create_default_admin():
-    """Create a default admin user if it doesn’t exist."""
-    admin_username = "admin"
-    admin_email = "admin@example.com"
-    admin_password = "1234"  # Change this in production!
-    
+    logger.info("Initializing application...")
+    try:
+        Base.metadata.create_all(bind=engine, checkfirst=True)
+        logger.info("Database tables checked/created successfully")
+    except Exception as e:
+        logger.error(f"Error during table creation: {e}")
+
     db = SessionLocal()
     try:
+        admin_username = "admin"
         existing_admin = get_user_by_username(db, admin_username)
         if not existing_admin:
             admin_user = UserCreate(
                 username=admin_username,
-                email=admin_email,
-                password=admin_password,
+                email="admin@example.com",
+                password="1234",  # Change this in production!
                 national_id="0000000000",
                 address="Admin Street",
                 state="Admin State",
@@ -91,10 +89,19 @@ async def create_default_admin():
             logger.info("Default admin user created")
         else:
             logger.info("Admin user already exists, skipping creation")
+        
+        # Mark initialization as done
+        with open(INIT_FLAG, "w") as f:
+            f.write("done")
     except Exception as e:
-        logger.error(f"Error creating default admin: {e}")
+        logger.error(f"Error during initialization: {e}")
     finally:
         db.close()
+
+@app.on_event("startup")
+async def startup_event():
+    async with startup_lock:
+        await initialize_app()
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8008)
