@@ -17,3 +17,4 @@ COPY . .
 RUN npm run build
 
 # No need to copy build files to Nginx; they are linked in docker-compose.yml
+CMD ["echo", "Build complete"]
