@@ -34,7 +34,7 @@ services:
     container_name: react_frontend
     volumes:
       - ./ui:/app
-      - ./ui/build:/app/build  # Share build output with host
+      - ./ui/build:/app/build
     networks:
       - app-network
 
@@ -47,7 +47,7 @@ services:
       - "801:80"
       - "4431:443"
     volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf
+      - ./nginx/templates:/etc/nginx/templates
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
       - ./ui/build:/usr/share/nginx/html

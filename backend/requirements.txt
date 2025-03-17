@@ -8,3 +8,4 @@ pydantic
 python-multipart
 mysqlclient
 httpx
+bcrypt==4.0.1
