@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { getToken } from './auth';
 
-const API_URL = 'https://api.tooswasher.com'; // Adjust if needed
+const API_URL = '/api'; // Adjust if needed
 
 const api = axios.create({
   baseURL: API_URL,
