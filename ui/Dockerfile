@@ -1,20 +1,26 @@
-# Use an official Node.js runtime as a parent image
-FROM node:16 as build
+# Use Node.js as base image
+FROM node:16
 
-# Set the working directory in the container
+# Set working directory inside the container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
+# Copy package.json and package-lock.json first (for caching dependencies)
 COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Copy the rest of the application code
+# Copy the rest of the app
 COPY . .
 
 # Build the React app
 RUN npm run build
 
-# No need to copy build files to Nginx; they are linked in docker-compose.yml
-CMD ["echo", "Build complete"]
+# Install `serve` globally
+RUN npm install -g serve
+
+# Expose the port `serve` will run on
+EXPOSE 3000
+
+# Start the React app with `serve`
+CMD ["serve", "-s", "build", "-l", "3000"]
