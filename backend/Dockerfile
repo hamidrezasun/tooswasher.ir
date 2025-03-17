@@ -9,14 +9,14 @@ RUN apt-get update && \
     apt-get install -y \
     default-libmysqlclient-dev \
     gcc \
-    default-mysql-client && \  # Use default-mysql-client instead of mysql-client
+    default-mysql-client && \
     rm -rf /var/lib/apt/lists/*
 
 # Copy the requirements file into the container
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt --default-timeout=100
 
 # Copy the current directory contents into the container
 COPY . .
