@@ -34,7 +34,6 @@ services:
     container_name: react_frontend
     volumes:
       - ./ui:/app
-      - ./ui/build:/app/build
     networks:
       - app-network
 

@@ -24,7 +24,7 @@ app = FastAPI(
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",
     },
 )
-
+app.mount("/api", app)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
