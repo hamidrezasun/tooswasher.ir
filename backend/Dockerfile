@@ -4,18 +4,22 @@ FROM python:3.9-slim
 # Set the working directory in the container
 WORKDIR /app
 
-# Install system dependencies for MySQLDB
+# Install system dependencies for MySQLDB and pkg-config
 RUN apt-get update && \
     apt-get install -y \
     default-libmysqlclient-dev \
     gcc \
-    default-mysql-client && \
+    default-mysql-client \
+    pkg-config && \
     rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip to the latest version
+RUN pip install --upgrade pip
 
 # Copy the requirements file into the container
 COPY requirements.txt .
 
-# Install Python dependencies
+# Install Python dependencies with increased timeout
 RUN pip install --no-cache-dir -r requirements.txt --default-timeout=100
 
 # Copy the current directory contents into the container
