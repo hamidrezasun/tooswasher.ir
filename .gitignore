@@ -226,4 +226,5 @@ cython_debug/
 
 # PyPI configuration file
 .pypirc
-/mysql/*
+mysql/*
+certbot/
