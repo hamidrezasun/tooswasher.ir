@@ -15,7 +15,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/token", auto_error=False)  # Disable auto-error
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/users/token", auto_error=False)  # Disable auto-error
 
 def authenticate_user(db: Session, username: str, password: str):
     user = get_user_by_username(db, username)
