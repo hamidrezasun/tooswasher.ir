@@ -5,10 +5,12 @@ import Product from './pages/Product';
 import CategoryProducts from './pages/CategoryProducts';
 import AdminDiscounts from './pages/AdminDiscounts';
 import AdminProducts from './pages/AdminProducts';
+import AdminCategories from './pages/AdminCategory';  // Added import
 import Events from './pages/Events';
 import EventDetails from './pages/EventDetails';
 import Pages from './pages/Pages';
 import AdminUsers from './pages/AdminUsers';
+import AdminPages from './pages/AdminPages';
 
 function App() {
   return (
@@ -16,11 +18,13 @@ function App() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/admin/users" element={<AdminUsers />} />
+        <Route path="/admin/categories" element={<AdminCategories />} />  {/* Added route */}
         <Route path="/products" element={<Products />} />
         <Route path="/products/:productId" element={<Product />} />
         <Route path="/categories/:categoryId" element={<CategoryProducts />} />
         <Route path="/admin/discounts" element={<AdminDiscounts />} />
         <Route path="/admin/products" element={<AdminProducts />} />
+        <Route path="/admin/pages" element={<AdminPages />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:eventId" element={<EventDetails />} />
         <Route path="/pages/:pageName" element={<Pages />} />

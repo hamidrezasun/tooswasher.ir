@@ -48,32 +48,40 @@ const SideNavbar = ({ onClose }) => {
           </svg>
         </button>
         <ul className="space-y-4">
-        {isAdmin && (
-          <li>
-            <Link to="/admin/products" onClick={onClose} className="text-indigo-600 hover:underline">
-              مدیریت محصولات
-            </Link>
-          </li>
-          )}
           {isAdmin && (
-          <li>
-            <Link to="/admin/discounts" onClick={onClose} className="text-indigo-600 hover:underline">
-              مدیریت تخفیف‌ها
-            </Link>
-          </li>
+            <>
+              <li>
+                <Link to="/admin/products" onClick={onClose} className="text-indigo-600 hover:underline">
+                  مدیریت محصولات
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/categories" onClick={onClose} className="text-indigo-600 hover:underline">
+                  مدیریت دسته‌بندی‌ها
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/discounts" onClick={onClose} className="text-indigo-600 hover:underline">
+                  مدیریت تخفیف‌ها
+                </Link>
+              </li>
+              <li>
+                <Link to="/admin/users" onClick={onClose} className="text-indigo-600 hover:underline">
+                  مدیریت کاربران
+                </Link>
+              </li>
+            </>
           )}
           <li>
             <Link to="/events" onClick={onClose} className="text-indigo-600 hover:underline">
               رویدادها
             </Link>
           </li>
-          {isAdmin && (
-            <li>
-              <Link to="/admin/users" onClick={onClose} className="text-indigo-600 hover:underline">
-                مدیریت کاربران
-              </Link>
-            </li>
-          )}
+          <li>
+            <Link to="/admin/pages" onClick={onClose} className="text-indigo-600 hover:underline">
+              مدیریت صفحات
+            </Link>
+          </li>
         </ul>
       </div>
     </div>
