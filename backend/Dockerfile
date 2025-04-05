@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.9-slim
+FROM docker.arvancloud.ir/python:3.9-slim
 
 # Set the working directory in the container
 WORKDIR /app
@@ -32,4 +32,5 @@ RUN chmod +x /app/wait-for-mysql.sh
 # Expose the port the app runs on
 EXPOSE 8000
 # Command to run the application with the wait script
-CMD ["sh", "-c", "./wait-for-mysql.sh db && python init_db.py && gunicorn main:app --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker"]
+#--workers 4 --worker-class uvicorn.workers.UvicornWorker
+CMD ["sh", "-c", "./wait-for-mysql.sh db && python init_db.py && fastapi run main.py --host 0.0.0.0 --port 8000 --workers 5"]

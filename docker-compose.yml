@@ -1,6 +1,6 @@
 services:
   db:
-    image: mysql:8.0
+    image: docker.arvancloud.ir/mysql:8.0
     container_name: mysql_db
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
@@ -11,6 +11,9 @@ services:
       - ./mysql/data:/var/lib/mysql
     networks:
       - app-network
+    dns:
+      - 185.51.200.2
+      - 178.22.122.100
 
   backend:
     build: ./backend
@@ -26,15 +29,23 @@ services:
       - ./backend:/app
     networks:
       - app-network
+    dns:
+      - 185.51.200.2
+      - 178.22.122.100
 
   frontend:
     build: ./ui
     container_name: react_frontend
     networks:
       - app-network
+    depends_on:
+      - backend
+    dns:
+      - 185.51.200.2
+      - 178.22.122.100
 
   nginx:
-    image: nginx:alpine
+    image: docker.arvancloud.ir/nginx:alpine
     container_name: nginx_proxy
     environment:
       - DOMAIN=${DOMAIN}
@@ -47,13 +58,15 @@ services:
       - ./certbot/www:/var/www/certbot
       - ./ui/build:/usr/share/nginx/html
     depends_on:
-      - backend
       - frontend
     networks:
       - app-network
+    dns:
+      - 185.51.200.2
+      - 178.22.122.100
 
   certbot:
-    image: certbot/certbot
+    image: docker.arvancloud.ir/certbot/certbot
     container_name: certbot
     volumes:
       - ./certbot/conf:/etc/letsencrypt

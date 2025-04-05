@@ -12,10 +12,10 @@ from routes.event import router as event_router
 from routes.files import router as file_router
 from fastapi.middleware.cors import CORSMiddleware
 import logging
+from database import Base,engine
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 app = FastAPI(
     title="طوس واشر",
     version="0.1",
@@ -43,6 +43,8 @@ app.include_router(discount_router)
 app.include_router(payment_router)
 app.include_router(event_router)
 app.include_router(file_router)
+
+Base.metadata.create_all(bind=engine)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)

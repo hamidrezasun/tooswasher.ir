@@ -11,7 +11,7 @@ MYSQL_HOST = "db"  # Use the service name from docker-compose.yml
 
 # MySQL database URL
 SQLALCHEMY_DATABASE_URL = f"mysql+mysqldb://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:3306/{MYSQL_DATABASE}"
-
+#SQLALCHEMY_DATABASE_URL = "sqlite:///./database.db"
 # Create the engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

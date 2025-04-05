@@ -1,6 +1,5 @@
 fastapi
-gunicorn
-uvicorn[standard]
+fastapi[standard]
 python-jose[cryptography]
 passlib[bcrypt]
 sqlalchemy
