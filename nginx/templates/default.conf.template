@@ -1,7 +1,7 @@
 server {
     listen 80;
     server_name ${DOMAIN};
-
+    server_tokens off;
     # Serve React app at /
     location / {
         proxy_pass http://react_frontend:3000;
@@ -9,7 +9,8 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
     }
-
+    error_page 404 /custom_404.html;
+    error_page 500 502 503 504 /custom_50x.html;
     # Proxy FastAPI requests to /api
     location /api {
         proxy_pass http://fastapi_backend:8000;
@@ -26,6 +27,7 @@ server {
 }
 # Temporarily disable SSL until certificates are ready
 # server {
+#     server_tokens off;
 #     listen 443 ssl;
 #     server_name ${DOMAIN};
 #
