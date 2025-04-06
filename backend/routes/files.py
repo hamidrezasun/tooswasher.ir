@@ -7,7 +7,7 @@ import schemas.file as file_schemas
 import schemas.user as user_schemas
 import auth
 from models.user import RoleEnum
-from crud.file import create_file, get_file, get_public_files, get_all_files, delete_file
+from crud.file import create_file, get_file, get_all_files, delete_file
 from database import get_db
 from sqlalchemy.orm import Session
 
