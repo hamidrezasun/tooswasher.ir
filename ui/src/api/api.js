@@ -135,6 +135,24 @@ export const updateEventActivity = async (eventId, activityId, data) =>
 export const deleteEventActivity = async (eventId, activityId) => 
   await api.delete(`/events/${eventId}/activities/${activityId}`); // DELETE /events/{event_id}/activities/{activity_id} - Delete an event activity (admin only)
 
+// --- File Endpoints ---
+export const uploadFile = async (file, isPublic = false) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return (await api.post('/files/upload/', formData, {
+    params: { public: isPublic },
+  })).data;
+};
+
+export const downloadFile = async (fileId) => {
+  const response = await api.get(`/files/download/${fileId}`, {
+    responseType: 'blob',
+  });
+  return response.data;
+};
+
+export const listFiles = async () => (await api.get('/files/')).data.files;
+
 // --- Deprecated or Mismatched Endpoint (to be removed or updated) ---
 export const getUsersByRole = async (role) => 
   (await api.get('/users/', { params: { role } })).data; // GET /users/ - Deprecated; use searchUsersByRole instead

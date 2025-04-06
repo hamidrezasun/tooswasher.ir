@@ -11,6 +11,7 @@ import EventDetails from './pages/EventDetails';
 import Pages from './pages/Pages';
 import AdminUsers from './pages/AdminUsers';
 import AdminPages from './pages/AdminPages';
+import AdminFile from './pages/AdminFile';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/admin/discounts" element={<AdminDiscounts />} />
         <Route path="/admin/products" element={<AdminProducts />} />
         <Route path="/admin/pages" element={<AdminPages />} />
+        <Route path="/admin/file" element={<AdminFile />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:eventId" element={<EventDetails />} />
         <Route path="/pages/:pageName" element={<Pages />} />
