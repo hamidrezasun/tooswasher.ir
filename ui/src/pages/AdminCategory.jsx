@@ -84,6 +84,13 @@ const textareaStyles = css`
   min-height: 100px;
 `;
 
+const imagePreviewStyles = css`
+  max-width: 200px;
+  max-height: 200px;
+  border-radius: 0.375rem;
+  margin-top: 0.5rem;
+`;
+
 const AdminCategories = () => {
   const [categories, setCategories] = useState([]);
   const [error, setError] = useState(null);
@@ -93,7 +100,8 @@ const AdminCategories = () => {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    parent_id: null
+    parent_id: null,
+    image_url: ''
   });
 
   useEffect(() => {
@@ -123,11 +131,18 @@ const AdminCategories = () => {
   const handleSaveCategory = async (e) => {
     e.preventDefault();
     try {
+      // Prepare data for API call
+      const categoryData = {
+        ...formData,
+        parent_id: formData.parent_id || null,
+        image_url: formData.image_url || null
+      };
+
       if (selectedCategory) {
-        const updated = await updateCategory(selectedCategory.id, formData);
+        const updated = await updateCategory(selectedCategory.id, categoryData);
         setCategories(categories.map(c => c.id === updated.id ? updated : c));
       } else {
-        const newCategory = await createCategory(formData);
+        const newCategory = await createCategory(categoryData);
         setCategories([...categories, newCategory]);
       }
       resetForm();
@@ -162,7 +177,8 @@ const AdminCategories = () => {
     setFormData({
       name: '',
       description: '',
-      parent_id: null
+      parent_id: null,
+      image_url: ''
     });
     setSelectedCategory(null);
     setShowAddForm(false);
@@ -173,7 +189,8 @@ const AdminCategories = () => {
     setFormData({
       name: category.name,
       description: category.description,
-      parent_id: category.parent_id
+      parent_id: category.parent_id,
+      image_url: category.image_url || ''
     });
     setShowAddForm(true);
   };
@@ -225,6 +242,30 @@ const AdminCategories = () => {
                 />
               </div>
               <div>
+                <label className="block mb-1">آدرس تصویر (URL):</label>
+                <input
+                  type="url"
+                  name="image_url"
+                  value={formData.image_url}
+                  onChange={handleInputChange}
+                  placeholder="https://example.com/image.jpg"
+                  css={inputStyles}
+                />
+                {formData.image_url && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600">پیش‌نمایش تصویر:</p>
+                    <img 
+                      src={formData.image_url} 
+                      alt="پیش‌نمایش تصویر دسته‌بندی" 
+                      css={imagePreviewStyles}
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                      }}
+                    />
+                  </div>
+                )}
+              </div>
+              <div>
                 <label className="block mb-1">دسته‌بندی والد (اختیاری):</label>
                 <select
                   name="parent_id"
@@ -274,6 +315,18 @@ const AdminCategories = () => {
                       <h3 className="text-xl font-medium">{category.name}</h3>
                       {category.description && (
                         <p className="text-gray-600 mt-1">{category.description}</p>
+                      )}
+                      {category.image_url && (
+                        <div className="mt-2">
+                          <img 
+                            src={category.image_url} 
+                            alt={`تصویر ${category.name}`}
+                            css={imagePreviewStyles}
+                            onError={(e) => {
+                              e.target.style.display = 'none';
+                            }}
+                          />
+                        </div>
                       )}
                       {category.parent_id && (
                         <p className="text-sm text-gray-500 mt-1">

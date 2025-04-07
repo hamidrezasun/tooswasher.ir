@@ -9,6 +9,7 @@ class Category(Base):
     name = Column(String(100), unique=True, index=True)  # Added length
     description = Column(Text)
     parent_id = Column(Integer, ForeignKey('categories.id'), nullable=True)
+    image_url = Column(String(255), nullable=True)  # Path to the image file
 
     # Relationship to self for subcategories
     parent = relationship('Category', remote_side=[id], backref='subcategories')

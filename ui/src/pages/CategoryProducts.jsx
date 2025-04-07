@@ -12,11 +12,16 @@ const CategoryProducts = () => {
   const [subcategories, setSubcategories] = useState([]);
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [catData, prodData] = await Promise.all([getCategoryById(categoryId), getProducts()]);
+        setLoading(true);
+        const [catData, prodData] = await Promise.all([
+          getCategoryById(categoryId),
+          getProducts()
+        ]);
         setCategory(catData);
 
         // If the category has no parent ID, fetch its subcategories and their products
@@ -37,6 +42,8 @@ const CategoryProducts = () => {
         }
       } catch (err) {
         setError(err.message || 'خطا در بارگذاری');
+      } finally {
+        setLoading(false);
       }
     };
     fetchData();
@@ -46,7 +53,7 @@ const CategoryProducts = () => {
     try {
       await addToCart(product.id, product.minimum_order || 1);
       setError('محصول به سبد خرید اضافه شد!');
-      setTimeout(() => setError(null), 3000); // Temporary message
+      setTimeout(() => setError(null), 3000);
     } catch (err) {
       setError(err.message || 'خطا در افزودن به سبد خرید');
       setTimeout(() => setError(null), 3000);
@@ -56,13 +63,45 @@ const CategoryProducts = () => {
   const calculateDiscountedPrice = (price, discount) =>
     discount?.percent ? Math.round(price * (1 - discount.percent / 100)) : price;
 
-  if (error && !error.includes('اضافه شد')) return <div className="text-center text-red-500 mt-20">{error}</div>;
-  if (!category) return <div className="text-center mt-20">در حال بارگذاری...</div>;
+  if (loading) return (
+    <div css={containerStyles}>
+      <Navbar />
+      <div className="text-center mt-20">در حال بارگذاری...</div>
+    </div>
+  );
+
+  if (error && !error.includes('اضافه شد')) return (
+    <div css={containerStyles}>
+      <Navbar />
+      <div className="text-center text-red-500 mt-20">{error}</div>
+    </div>
+  );
 
   return (
     <div css={containerStyles}>
       <Navbar />
-      <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">{category.name}</h1>
+      
+      {/* Category Header with Image */}
+      <div className="mb-8 text-center">
+        {category.image_url && (
+          <div className="flex justify-center mb-4">
+            <img 
+              src={category.image_url} 
+              alt={category.name}
+              className="max-h-40 object-contain rounded-lg"
+              onError={(e) => {
+                e.target.style.display = 'none';
+              }}
+            />
+          </div>
+        )}
+        <h1 className="text-3xl font-bold text-gray-800">{category.name}</h1>
+        {category.description && (
+          <p className="text-gray-600 mt-2 max-w-2xl mx-auto">
+            {category.description}
+          </p>
+        )}
+      </div>
 
       {/* Show subcategories if the category has no parent ID */}
       {!category.parent_id && subcategories.length > 0 && (
@@ -73,8 +112,18 @@ const CategoryProducts = () => {
               <Link
                 key={sub.id}
                 to={`/categories/${sub.id}`}
-                className="bg-indigo-100 text-indigo-700 p-2 rounded hover:bg-indigo-200 transition"
+                className="bg-indigo-100 text-indigo-700 p-2 rounded hover:bg-indigo-200 transition flex items-center"
               >
+                {sub.image_url && (
+                  <img 
+                    src={sub.image_url}
+                    alt={sub.name}
+                    className="w-8 h-8 object-cover rounded-full mr-2"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                    }}
+                  />
+                )}
                 {sub.name}
               </Link>
             ))}
@@ -93,6 +142,9 @@ const CategoryProducts = () => {
                   src={product.image || 'https://via.placeholder.com/250x200'}
                   alt={product.name}
                   className="w-full h-48 object-cover rounded"
+                  onError={(e) => {
+                    e.target.src = 'https://via.placeholder.com/250x200';
+                  }}
                 />
                 <h2 className="text-lg font-semibold mt-2 text-gray-800">{product.name}</h2>
                 <div className="mt-2 flex items-center">
@@ -119,7 +171,11 @@ const CategoryProducts = () => {
       </div>
 
       {/* Success message for adding to cart */}
-      {error && error.includes('اضافه شد') && <div className="text-center text-green-500 mt-4">{error}</div>}
+      {error && error.includes('اضافه شد') && (
+        <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+          {error}
+        </div>
+      )}
     </div>
   );
 };

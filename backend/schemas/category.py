@@ -1,5 +1,5 @@
 # schemas/category.py
-from pydantic import BaseModel
+from pydantic import BaseModel, HttpUrl
 from typing import Optional, List
 
 class CategoryBase(BaseModel):
@@ -7,15 +7,23 @@ class CategoryBase(BaseModel):
 
 class CategoryCreate(CategoryBase):
     description: str
-    parent_id: Optional[int] = None  # Optional field for parent category ID
+    parent_id: Optional[int] = None
+    image_url: Optional[HttpUrl] = None  # Using HttpUrl for URL validation
+
+class CategoryUpdate(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    parent_id: Optional[int] = None
+    image_url: Optional[HttpUrl] = None
 
 class Category(CategoryBase):
     id: int
     description: str
-    parent_id: Optional[int] = None  # Optional field for parent category ID
-    subcategories: List["Category"] = []  # List of subcategories
+    parent_id: Optional[int] = None
+    image_url: Optional[HttpUrl] = None
+    subcategories: List["Category"] = []
 
     class Config:
-        from_attributes = True  # Enables ORM mode for Pydantic
+        from_attributes = True
 
-# This is necessary to support recursive models (categories with subcategories)
+Category.model_rebuild()

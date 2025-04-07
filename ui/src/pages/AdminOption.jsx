@@ -88,7 +88,8 @@ const AdminOptions = () => {
     { option_name: 'admin_email', option_value: 'admin_email' },
     { option_name: 'title_description', option_value: 'title_description' },
     { option_name: 'company_description', option_value: 'company_description' },
-    { option_name: 'company_name', option_value: 'company_name' }
+    { option_name: 'company_name', option_value: 'company_name' },
+    { option_name: 'logo_url', option_value: 'logo_url' }
   ];
 
   useEffect(() => {
