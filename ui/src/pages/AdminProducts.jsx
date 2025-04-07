@@ -17,17 +17,38 @@ const searchBarStyles = css`
   margin-bottom: 1.5rem;
 `;
 
-const categorySectionStyles = css`
+const productSectionStyles = css`
   margin-bottom: 2rem;
 `;
 
-const categoryTitleStyles = css`
+const productTitleStyles = css`
   font-size: 1.5rem;
   font-weight: bold;
   color: #374151;
   margin-bottom: 1rem;
   border-bottom: 2px solid #e5e7eb;
   padding-bottom: 0.5rem;
+`;
+
+const paginationStyles = css`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+`;
+
+const buttonStyles = css`
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: #3b82f6;
+  color: white;
+  &:hover {
+    background-color: #2563eb;
+  }
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
 `;
 
 const AdminProducts = () => {
@@ -38,6 +59,9 @@ const AdminProducts = () => {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showAddPopup, setShowAddPopup] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [skip, setSkip] = useState(0);
+  const [limit, setLimit] = useState(10); // Default items per page
+  const [totalProducts, setTotalProducts] = useState(0); // To track total number of products
 
   useEffect(() => {
     const fetchData = async () => {
@@ -46,41 +70,36 @@ const AdminProducts = () => {
           const user = await getUserProfile();
           setIsAdmin(user.role === 'admin');
         }
-        const data = await getProducts();
+        const data = await getProducts(skip, limit);
         setProducts(data || []);
-        setFilteredProducts(data || []); // Initialize filteredProducts with all products
+        setFilteredProducts(data || []);
+        // Assuming the API doesn't return total count; estimate based on returned data
+        setTotalProducts(data.length === limit ? skip + limit + 1 : skip + data.length);
       } catch (err) {
         setError(err.message || 'خطا در بارگذاری');
       }
     };
     fetchData();
-  }, []);
+  }, [skip, limit]);
 
   useEffect(() => {
     const search = async () => {
       if (searchTerm.trim() === '') {
-        setFilteredProducts(products); // Reset to full list when search term is empty
+        const data = await getProducts(skip, limit); // Fetch paginated data when search is cleared
+        setFilteredProducts(data || []);
+        setTotalProducts(data.length === limit ? skip + limit + 1 : skip + data.length);
         return;
       }
       try {
-        const data = await searchProducts(searchTerm);
+        const data = await searchProducts(searchTerm, skip, limit); // Paginated search
         setFilteredProducts(data || []);
+        setTotalProducts(data.length === limit ? skip + limit + 1 : skip + data.length);
       } catch (err) {
         setError(err.message || 'خطا در جستجو');
       }
     };
     search();
-  }, [searchTerm, products]); // Added products as a dependency to ensure reset works after initial fetch or updates
-
-  // Group products by category
-  const groupedProducts = filteredProducts.reduce((acc, product) => {
-    const categoryName = product.category?.name || 'بدون دسته‌بندی';
-    if (!acc[categoryName]) {
-      acc[categoryName] = [];
-    }
-    acc[categoryName].push(product);
-    return acc;
-  }, {});
+  }, [searchTerm, skip, limit]); // Added skip and limit as dependencies
 
   const handleSaveProduct = async (data) => {
     try {
@@ -92,6 +111,7 @@ const AdminProducts = () => {
         const newProduct = await createProduct(data);
         setProducts([...products, newProduct]);
         setFilteredProducts([...filteredProducts, newProduct]);
+        setTotalProducts(totalProducts + 1);
       }
       setSelectedProduct(null);
       setShowAddPopup(false);
@@ -114,10 +134,19 @@ const AdminProducts = () => {
         await deleteProduct(id);
         setProducts(products.filter((p) => p.id !== id));
         setFilteredProducts(filteredProducts.filter((p) => p.id !== id));
+        setTotalProducts(totalProducts - 1);
         setSelectedProduct(null);
       } catch (err) {
         setError(err.message || 'خطا در حذف محصول');
       }
+    }
+  };
+
+  const handlePageChange = (direction) => {
+    if (direction === 'next' && skip + limit < totalProducts) {
+      setSkip(skip + limit);
+    } else if (direction === 'prev' && skip > 0) {
+      setSkip(skip - limit);
     }
   };
 
@@ -144,9 +173,11 @@ const AdminProducts = () => {
           onChange={(e) => setSearchTerm(e.target.value)}
           css={searchBarStyles}
         />
-        {Object.keys(groupedProducts).map((categoryName) => (
-          <div key={categoryName} css={categorySectionStyles}>
-            <h2 css={categoryTitleStyles}>{categoryName}</h2>
+        <div css={productSectionStyles}>
+          <h2 css={productTitleStyles}>محصولات</h2>
+          {filteredProducts.length === 0 ? (
+            <p className="text-gray-500">محصولی یافت نشد</p>
+          ) : (
             <div className="overflow-x-auto">
               <table className="w-full bg-white rounded-lg shadow-md">
                 <thead>
@@ -156,7 +187,7 @@ const AdminProducts = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {groupedProducts[categoryName].map((product) => (
+                  {filteredProducts.map((product) => (
                     <tr
                       key={product.id}
                       className="border-t hover:bg-gray-50 cursor-pointer"
@@ -169,8 +200,27 @@ const AdminProducts = () => {
                 </tbody>
               </table>
             </div>
+          )}
+          <div css={paginationStyles}>
+            <button
+              css={buttonStyles}
+              onClick={() => handlePageChange('prev')}
+              disabled={skip === 0}
+            >
+              قبلی
+            </button>
+            <span>
+              صفحه {Math.floor(skip / limit) + 1} از {Math.ceil(totalProducts / limit)}
+            </span>
+            <button
+              css={buttonStyles}
+              onClick={() => handlePageChange('next')}
+              disabled={skip + limit >= totalProducts}
+            >
+              بعدی
+            </button>
           </div>
-        ))}
+        </div>
       </div>
       {(selectedProduct || showAddPopup) && (
         <ProductPopup

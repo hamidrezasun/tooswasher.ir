@@ -126,6 +126,15 @@ async def edit_user(
         return updated_user
     except ValueError as e:
         raise HTTPException(status_code=404, detail=str(e))
+    
+@router.get("/search-by-id/", response_model=user_schemas.User)
+def get_usr_by_id(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: user_schemas.User = Depends(auth.get_current_admin_user),
+):
+    user = user_crud.get_user_by_id(db,user_id=id)
+    return user
 
 @router.get("/search-by-role/", response_model=List[user_schemas.User])
 def search_users_by_role(

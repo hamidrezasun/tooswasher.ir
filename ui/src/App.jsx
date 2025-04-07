@@ -12,7 +12,6 @@ import Pages from './pages/Pages';
 import AdminUsers from './pages/AdminUsers';
 import AdminPages from './pages/AdminPages';
 import AdminFile from './pages/AdminFile';
-
 function App() {
   return (
     <Router>

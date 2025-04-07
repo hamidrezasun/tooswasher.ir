@@ -59,8 +59,9 @@ def get_file(db: Session, file_id: int) -> FileUpload:
     return file
 
 def get_all_files(db: Session, skip: int = 0, limit: int = 100) -> List[FileUpload]:
-    """Get all files (admin only)"""
+    """Get all public files (admin only)"""
     return db.query(FileUpload)\
+            .filter(FileUpload.public == True)\
             .offset(skip)\
             .limit(limit)\
             .all()

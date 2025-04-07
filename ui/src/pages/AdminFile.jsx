@@ -3,9 +3,10 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { uploadFile, downloadFile, listFiles, getUserProfile } from '../api/api';
+import { uploadFile, downloadFile, listFiles, getUserProfile, getUserById } from '../api/api';
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
+import moment from 'jalali-moment'
 
 const searchBarStyles = css`
   width: 100%;
@@ -35,8 +36,71 @@ const fileCardStyles = css`
   padding: 1rem;
   margin-bottom: 1rem;
   transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
   &:hover {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+`;
+
+const fileContentStyles = css`
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+`;
+
+const fileDetailsStyles = css`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+`;
+
+const buttonContainerStyles = css`
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+`;
+
+const paginationStyles = css`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-top: 1.5rem;
+`;
+
+const buttonStyles = css`
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: #3b82f6;
+  color: white;
+  &:hover {
+    background-color: #2563eb;
+  }
+  &:disabled {
+    background-color: #9ca3af;
+    cursor: not-allowed;
+  }
+`;
+
+const downloadButtonStyles = css`
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: #10b981;
+  color: white;
+  &:hover {
+    background-color: #059669;
+  }
+`;
+
+const linkStyles = css`
+  color: #2563eb;
+  cursor: pointer;
+  word-break: break-all;
+  &:hover {
+    color: #1d4ed8;
   }
 `;
 
@@ -47,6 +111,10 @@ const FileManager = () => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [skip, setSkip] = useState(0);
+  const [limit, setLimit] = useState(10);
+  const [totalFiles, setTotalFiles] = useState(0);
+  const [userMap, setUserMap] = useState({});
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,14 +123,24 @@ const FileManager = () => {
           const user = await getUserProfile();
           setIsAdmin(user.role === 'admin');
         }
-        const data = await listFiles();
+        const data = await listFiles(skip, limit);
         setFiles(data || []);
+        setTotalFiles(data.length === limit ? skip + limit + 1 : skip + data.length);
+
+        const uniqueUserIds = [...new Set(data.map(file => file.user_id))];
+        const userPromises = uniqueUserIds.map(id => getUserById(id));
+        const users = await Promise.all(userPromises);
+        const newUserMap = users.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {});
+        setUserMap(newUserMap);
       } catch (err) {
         setError(err.message || 'Error loading files');
       }
     };
     fetchData();
-  }, []);
+  }, [skip, limit]);
 
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
@@ -70,20 +148,12 @@ const FileManager = () => {
 
     try {
       setUploadProgress(0);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const config = {
-        onUploadProgress: (progressEvent) => {
-          const percentCompleted = Math.round(
-            (progressEvent.loaded * 100) / progressEvent.total
-          );
-          setUploadProgress(percentCompleted);
-        },
-      };
-
-      const uploadedFile = await uploadFile(file, false, config);
+      const uploadedFile = await uploadFile(file, true);
       setFiles([uploadedFile, ...files]);
+      setTotalFiles(totalFiles + 1);
+
+      const user = await getUserById(uploadedFile.user_id);
+      setUserMap(prev => ({ ...prev, [user.id]: user }));
       setUploadProgress(0);
     } catch (err) {
       setError(err.message || 'Error uploading file');
@@ -106,9 +176,72 @@ const FileManager = () => {
     }
   };
 
+  const handleDoubleClickCopy = (url) => {
+    navigator.clipboard.writeText(url)
+      .then(() => alert('لینک تصویر محصول کپی شد!'))
+      .catch(err => setError('خطا در کپی کردن لینک: ' + err.message));
+  };
+
+  const renderFilePreview = (file) => {
+    if (!file.download_url || !file.content_type) return null;
+
+    if (file.content_type.startsWith('image/')) {
+      return (
+        <img
+          src={file.download_url}
+          alt={file.original_filename}
+          className="max-h-48 rounded object-contain border"
+        />
+      );
+    }
+
+    if (file.content_type.startsWith('video/')) {
+      return (
+        <video
+          controls
+          className="max-h-48 rounded border"
+        >
+          <source src={file.download_url} type={file.content_type} />
+          مرورگر شما از پخش ویدیو پشتیبانی نمی‌کند.
+        </video>
+      );
+    }
+
+    if (file.content_type.startsWith('text/') || file.content_type === 'application/json') {
+      return (
+        <iframe
+          src={file.download_url}
+          className="w-full h-48 border rounded"
+          title={file.original_filename}
+        ></iframe>
+      );
+    }
+
+    return (
+      <div className="text-gray-500 text-sm italic">
+        پیش‌نمایش برای این نوع فایل پشتیبانی نمی‌شود.
+      </div>
+    );
+  };
+
   const filteredFiles = files.filter(file => 
     file.original_filename.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handlePageChange = (direction) => {
+    if (direction === 'next' && skip + limit < totalFiles) {
+      setSkip(skip + limit);
+    } else if (direction === 'prev' && skip > 0) {
+      setSkip(skip - limit);
+    }
+  };
+
+  const getUserDisplayName = (userId) => {
+    const user = userMap[userId];
+    if (!user) return `کاربر #${userId}`;
+    if (user.name && user.last_name) return `${user.name} ${user.last_name}`;
+    return user.username || `کاربر #${userId}`;
+  };
 
   if (isAdmin === false) return <Navigate to="/" />;
   if (error) return <div className="text-center text-red-500 mt-20">{error}</div>;
@@ -159,34 +292,78 @@ const FileManager = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {filteredFiles.map((file) => (
                 <div key={file.id} css={fileCardStyles}>
-                  <div className="flex justify-between items-start">
-                    <div>
+                  <div css={fileContentStyles}>
+                    <div css={fileDetailsStyles}>
                       <h3 className="font-medium text-gray-800 truncate">
                         {file.original_filename}
                       </h3>
                       <p className="text-sm text-gray-500">
-                        {Math.round(file.size / 1024)} KB
+                        حجم: {Math.round(file.size / 1024)} KB
                       </p>
                       <p className="text-sm text-gray-500">
-                        {new Date(file.upload_date).toLocaleString()}
+                        تاریخ آپلود: {moment(file.upload_date, 'YYYY/MM/DD').locale('fa').format('YYYY/MM/DD')}
                       </p>
+                      <p className="text-sm text-gray-500">
+                        آپلود شده توسط: {getUserDisplayName(file.user_id)}
+                      </p>
+                      {file.download_url && (
+                        <>
+                          <p className="text-sm text-gray-500 truncate">
+                            لینک دانلود: <a href={file.download_url} target="_blank" rel="noopener noreferrer">مشاهده</a>
+                          </p>
+                          <p
+                            css={linkStyles}
+                            onDoubleClick={() => handleDoubleClickCopy(file.download_url)}
+                            title="برای کپی کردن دوبار کلیک کنید"
+                          >
+                            {file.download_url}
+                          </p>
+                        </>
+                      )}
                     </div>
-                    <button
-                      onClick={() => handleDownload(file.id, file.original_filename)}
-                      className="bg-green-500 text-white px-3 py-1 rounded hover:bg-green-600 transition text-sm"
-                    >
-                      دانلود
-                    </button>
+                    <div css={buttonContainerStyles}>
+                      <button
+                        css={downloadButtonStyles}
+                        onClick={() => handleDownload(file.id, file.original_filename)}
+                      >
+                        دانلود
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    {renderFilePreview(file)}
                   </div>
                   <div className="mt-2 text-xs text-gray-500">
                     <span className={`px-2 py-1 rounded ${file.public ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}`}>
                       {file.public ? 'عمومی' : 'خصوصی'}
+                    </span>
+                    <span className="ml-2 px-2 py-1 rounded bg-gray-100 text-gray-800">
+                      نوع: {file.content_type}
                     </span>
                   </div>
                 </div>
               ))}
             </div>
           )}
+          <div css={paginationStyles}>
+            <button
+              css={buttonStyles}
+              onClick={() => handlePageChange('prev')}
+              disabled={skip === 0}
+            >
+              قبلی
+            </button>
+            <span>
+              صفحه {Math.floor(skip / limit) + 1} از {Math.ceil(totalFiles / limit)}
+            </span>
+            <button
+              css={buttonStyles}
+              onClick={() => handlePageChange('next')}
+              disabled={skip + limit >= totalFiles}
+            >
+              بعدی
+            </button>
+          </div>
         </div>
       </div>
     </div>

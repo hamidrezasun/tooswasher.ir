@@ -46,12 +46,6 @@ const Products = () => {
             </Link>
           ))}
         </div>
-        {/* Temporary content for scrolling */}
-        {Array(20).fill().map((_, index) => (
-          <p key={index} className="text-gray-600 mt-4">
-            این یک متن آزمایشی برای تست اسکرول است.
-          </p>
-        ))}
       </div>
     </div>
   );

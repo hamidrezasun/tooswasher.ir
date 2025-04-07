@@ -29,7 +29,7 @@ services:
     depends_on:
       - db
     volumes:
-      - ./backend:/app
+      - ./backend/uploads:/app/uploads
     networks:
       - app-network
     dns:
@@ -39,6 +39,8 @@ services:
   frontend:
     build: ./ui
     container_name: react_frontend
+    volumes:
+      - ./ui/build:/app/dist
     networks:
       - app-network
     depends_on:
