@@ -39,9 +39,6 @@ export const logoStyles = css`
   font-size: 1.5rem;
   transition: color 0.3s ease;
   flex-shrink: 0;
-  &:hover {
-    color: #1e40af;
-  }
   @media (max-width: 640px) {
     font-size: 1.25rem;
   }

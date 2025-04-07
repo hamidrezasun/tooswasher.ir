@@ -10,6 +10,7 @@ from routes.discount import router as discount_router
 from routes.payment import router as payment_router
 from routes.event import router as event_router
 from routes.files import router as file_router
+from routes.option import router as option_router
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from database import Base,engine
@@ -17,7 +18,7 @@ from database import Base,engine
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 app = FastAPI(
-    title="طوس واشر",
+    title="api",
     version="0.1",
     root_path="/api",  # For reverse proxy
     openapi_url="/openapi.json",  # Explicit OpenAPI schema path
@@ -45,6 +46,7 @@ app.include_router(discount_router)
 app.include_router(payment_router)
 app.include_router(event_router)
 app.include_router(file_router)
+app.include_router(option_router)
 
 Base.metadata.create_all(bind=engine)
 

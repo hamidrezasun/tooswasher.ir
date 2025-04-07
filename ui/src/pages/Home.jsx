@@ -1,21 +1,84 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from '../components/Navbar';
 import CategoryPopup from '../components/CategoryPopup';
+import { getOptionByName } from '../api/api';
 
 const Home = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [companyName, setCompanyName] = useState('');
+  const [titleDescription, setTitleDescription] = useState('');
+  const [companyDescription, setCompanyDescription] = useState('');
+  const [companyColorCode, setCompanyColorCode] = useState('');
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const companyNameOption = await getOptionByName('company_name');
+        const titleDescriptionOption = await getOptionByName('title_description');
+        const companyDescriptionOption = await getOptionByName('company_description');
+        const companyColorCodeOption = await getOptionByName('company_color_code');
+
+        if (companyNameOption) setCompanyName(companyNameOption.option_value);
+        if (titleDescriptionOption) setTitleDescription(titleDescriptionOption.option_value);
+        if (companyDescriptionOption) setCompanyDescription(companyDescriptionOption.option_value);
+        if (companyColorCodeOption) setCompanyColorCode(companyColorCodeOption.option_value);
+      } catch (error) {
+        console.error('Failed to fetch options:', error);
+      }
+    };
+    fetchData();
+  }, []);
+
+  // Apply dynamic styles
+    const dynamicHeroStyles = css`
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4rem 1rem 2rem;
+    background: linear-gradient(135deg, ${companyColorCode}, ${adjustColor(companyColorCode, -30)});
+    color: white;
+    position: relative;
+    overflow: hidden;
+
+    @media (min-width: 768px) {
+        flex-direction: row-reverse;
+        min-height: 80vh;
+        padding: 4rem 2rem;
+    }
+    `;
+
+    // Helper function to adjust color brightness
+    function adjustColor(color, amount) {
+        let R = parseInt(color.substring(1, 3), 16);
+        let G = parseInt(color.substring(3, 5), 16);
+        let B = parseInt(color.substring(5, 7), 16);
+
+        R = R + amount;
+        G = G + amount;
+        B = B + amount;
+
+        R = (R < 0) ? 0 : ((R > 255) ? 255 : R);
+        G = (G < 0) ? 0 : ((G > 255) ? 255 : G);
+        B = (B < 0) ? 0 : ((B > 255) ? 255 : B);
+
+        const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
+        const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
+        const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
+
+        return "#" + RR + GG + BB;
+    }
 
   return (
     <div css={containerStyles}>
       <Navbar />
       
       {/* Hero Section */}
-      <section css={heroStyles}>
+      <section css={dynamicHeroStyles}>
         <div css={heroContent}>
-          <h1 css={heroTitle}>طوس واشر</h1>
-          <p css={heroSubtitle}>تولیدکننده پیشرو در واشرهای صنعتی با کیفیت جهانی</p>
+          <h1 css={heroTitle}>{companyName}</h1>
+          <p css={heroSubtitle}>{titleDescription}</p>
           <div css={buttonGroup}>
             <button 
               onClick={() => setIsCategoryOpen(true)}
@@ -40,12 +103,9 @@ const Home = () => {
       {/* Company Intro Section */}
       <section css={introSection}>
         <div css={introContent}>
-          <h2 css={sectionTitle}>معرفی طوس واشر</h2>
+          <h2 css={sectionTitle}>معرفی {companyName}</h2>
           <p css={introText}>
-            شرکت طوس واشر با بیش از ۱۵ سال تجربه در صنعت تولید واشرهای صنعتی، 
-            مفتخر است که محصولاتی با استانداردهای بین‌المللی به مشتریان خود ارائه می‌دهد. 
-            ما با بهره‌گیری از تکنولوژی پیشرفته و تیمی متخصص، راه‌حل‌های قابل اعتماد 
-            برای صنایع مختلف فراهم می‌کنیم.
+            {companyDescription}
           </p>
         </div>
       </section>
@@ -85,7 +145,7 @@ const Home = () => {
 
       {/* CTA Section */}
       <section css={ctaSection}>
-        <h2 css={ctaTitle}>همکاری با طوس واشر</h2>
+        <h2 css={ctaTitle}>همکاری با {companyName}</h2>
         <p css={ctaText}>برای سفارش محصولات یا دریافت مشاوره با ما در تماس باشید</p>
         <button css={[primaryButton, ctaButton]}>
           درخواست مشاوره
@@ -127,23 +187,6 @@ const containerStyles = css`
   font-family: 'Vazir', sans-serif;
   direction: rtl;
   background: #f9fafb;
-`;
-
-const heroStyles = css`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 4rem 1rem 2rem;
-  background: linear-gradient(135deg, #dc2626, #b91c1c);
-  color: white;
-  position: relative;
-  overflow: hidden;
-
-  @media (min-width: 768px) {
-    flex-direction: row-reverse;
-    min-height: 80vh;
-    padding: 4rem 2rem;
-  }
 `;
 
 const heroContent = css`

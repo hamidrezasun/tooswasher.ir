@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { isAuthenticated, logoutUser } from '../api/auth';
-import { getUserProfile, getPages, getCart } from '../api/api';
+import { getOptionByName, getUserProfile, getPages, getCart } from '../api/api';
 import LoginPopup from './LoginPopup';
 import RegisterPopup from './RegisterPopup';
 import CategoryPopup from './CategoryPopup';
@@ -28,6 +28,7 @@ import {
   menuStyles,
   menuItemStyles,
 } from './NavbarStyles';
+
 const Navbar = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -41,6 +42,8 @@ const Navbar = () => {
   const [cartCount, setCartCount] = useState(0);
   const [loginMessage, setLoginMessage] = useState('');
   const [showLoginMessage, setShowLoginMessage] = useState(false);
+  const [companyName, setCompanyName] = useState('company_name'); // Default value
+  const [companyColorCode, setCompanyColorCode] = useState('#2563eb'); // Default color
 
   const fetchCart = async () => {
     if (isAuthenticated()) {
@@ -77,6 +80,20 @@ const Navbar = () => {
 
   useEffect(() => {
     const fetchData = async () => {
+      try {
+        const companyNameOption = await getOptionByName('company_name');
+        const companyColorCodeOption = await getOptionByName('company_color_code'); // Fetch color
+        if (companyNameOption) {
+          setCompanyName(companyNameOption.option_value);
+        }
+        if (companyColorCodeOption) {
+          setCompanyColorCode(companyColorCodeOption.option_value); // Set color
+        }
+      } catch (error) {
+        console.error("Failed to fetch company name or color:", error);
+        // Keep the default values
+      }
+
       if (isAuthenticated()) {
         try {
           const profile = await getUserProfile();
@@ -131,12 +148,51 @@ const Navbar = () => {
 
   const isStaffOrAdmin = user && (user.role === 'staff' || user.role === 'admin');
 
+  // Apply dynamic styles
+  const dynamicLogoStyles = css`
+    ${logoStyles};
+    color: ${companyColorCode}; // Use fetched color
+    &:hover {
+      color: ${adjustColor(companyColorCode, -20)}; // Darker on hover
+    }
+  `;
+
+  const dynamicCategoryButtonStyles = css`
+    ${categoryButtonStyles};
+    background: linear-gradient(135deg, ${companyColorCode} 0%, ${
+      adjustColor(companyColorCode, 20)
+    } 100%);
+    &:hover {
+      background: linear-gradient(135deg, ${adjustColor(companyColorCode, -20)} 0%, ${companyColorCode} 100%);
+    }
+  `;
+    // Helper function to adjust color brightness
+  function adjustColor(color, amount) {
+    let R = parseInt(color.substring(1, 3), 16);
+    let G = parseInt(color.substring(3, 5), 16);
+    let B = parseInt(color.substring(5, 7), 16);
+
+    R = R + amount;
+    G = G + amount;
+    B = B + amount;
+
+    R = (R < 0) ? 0 : ((R > 255) ? 255 : R);
+    G = (G < 0) ? 0 : ((G > 255) ? 255 : G);
+    B = (B < 0) ? 0 : ((B > 255) ? 255 : B);
+
+    const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
+    const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
+    const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
+
+    return "#" + RR + GG + BB;
+  }
+
   return (
     <nav css={navbarStyles}>
       <div css={containerStyles}>
         <div css={topBarStyles}>
-          <Link to="/" css={logoStyles}>
-            طوس واشر
+          <Link to="/" css={dynamicLogoStyles}>
+            {companyName}
           </Link>
           <input
             type="text"
@@ -206,7 +262,7 @@ const Navbar = () => {
               {page.name}
             </Link>
           ))}
-          <button css={categoryButtonStyles} onClick={() => setIsCategoryOpen(true)}>
+          <button css={dynamicCategoryButtonStyles} onClick={() => setIsCategoryOpen(true)}>
             دسته‌بندی‌ها
           </button>
         </div>
@@ -233,3 +289,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+

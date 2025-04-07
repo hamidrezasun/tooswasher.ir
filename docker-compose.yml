@@ -23,9 +23,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       SECRET_KEY: ${SECRET_KEY}
-      NEXTCLOUDWEBSITE: ${NEXTCLOUDWEBSITE}
-      NEXTCLOUDUSERNAME: ${NEXTCLOUDUSERNAME}
-      NEXTCLOUDPASSWORD: ${NEXTCLOUDPASSWORD}
     depends_on:
       - db
     volumes:
@@ -66,9 +63,9 @@ services:
       - frontend
     networks:
       - app-network
-#    dns:
-#      - 185.51.200.2
-#      - 178.22.122.100
+    dns:
+      - 185.51.200.2
+      - 178.22.122.100
 
   certbot:
     image: docker.arvancloud.ir/certbot/certbot

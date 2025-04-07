@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import ProductPopup from '../components/ProductPopup'; // Import ProductPopup
+import ProductPopup from '../components/ProductPopup';
 import { getProductById, addToCart, updateProduct, deleteProduct, getUserProfile } from '../api/api';
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
@@ -14,13 +14,19 @@ const Product = () => {
   const [error, setError] = useState(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
-  const [showEditPopup, setShowEditPopup] = useState(false); // State for popup visibility
+  const [showEditPopup, setShowEditPopup] = useState(false);
+  const [quantity, setQuantity] = useState(1);
+  const [quantityError, setQuantityError] = useState('');
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         const data = await getProductById(productId);
         setProduct(data);
+        // Set initial quantity to minimum order if it exists
+        if (data.minimum_order) {
+          setQuantity(data.minimum_order);
+        }
         if (isAuthenticated()) {
           const user = await getUserProfile();
           setIsAdmin(user.role === 'admin');
@@ -32,10 +38,36 @@ const Product = () => {
     fetchData();
   }, [productId]);
 
-  const handleAddToCart = async () => {
+  const handleQuantityChange = (e) => {
+    const newQuantity = parseInt(e.target.value) || 1;
+    setQuantity(newQuantity);
+    validateQuantity(newQuantity);
+  };
+
+  const validateQuantity = (qty) => {
     if (!product) return;
+    
+    let error = '';
+    
+    // Check minimum order
+    if (product.minimum_order && qty < product.minimum_order) {
+      error = `حداقل تعداد سفارش ${product.minimum_order} می‌باشد`;
+    }
+    
+    // Check rate (if product has rate)
+    if (product.rate && qty % product.rate !== 0) {
+      error = `تعداد باید مضربی از ${product.rate} باشد`;
+    }
+    
+    setQuantityError(error);
+    return error === '';
+  };
+
+  const handleAddToCart = async () => {
+    if (!product || !validateQuantity(quantity)) return;
+    
     try {
-      await addToCart(product.id, product.minimum_order || 1);
+      await addToCart(product.id, quantity);
       setError('محصول به سبد خرید اضافه شد!');
       setTimeout(() => setError(null), 3000);
     } catch (err) {
@@ -59,7 +91,11 @@ const Product = () => {
     try {
       const updated = await updateProduct(productId, data);
       setProduct(updated);
-      setShowEditPopup(false); // Close popup after save
+      setShowEditPopup(false);
+      // Reset quantity if minimum order changed
+      if (data.minimum_order) {
+        setQuantity(data.minimum_order);
+      }
     } catch (err) {
       setError(err.message || 'خطا در به‌روزرسانی محصول');
     }
@@ -97,16 +133,52 @@ const Product = () => {
               )}
             </div>
             <p className="mt-4 text-gray-600">{product.description || 'توضیحات در دسترس نیست'}</p>
+            
+            {/* Quantity selector */}
+            <div className="mt-4">
+              <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                تعداد:
+              </label>
+              <input
+                type="number"
+                id="quantity"
+                min={product.minimum_order || 1}
+                step={product.rate || 1}
+                value={quantity}
+                onChange={handleQuantityChange}
+                className="w-24 p-2 border border-gray-300 rounded"
+              />
+              {quantityError && (
+                <p className="mt-1 text-sm text-red-500">{quantityError}</p>
+              )}
+              {product.minimum_order && (
+                <p className="mt-1 text-xs text-gray-500">
+                  حداقل سفارش: {product.minimum_order}
+                </p>
+              )}
+              {product.rate && product.rate > 1 && (
+                <p className="mt-1 text-xs text-gray-500">
+                  مضربی از: {product.rate}
+                </p>
+              )}
+            </div>
+            
             <button
               onClick={handleAddToCart}
-              className="mt-6 bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition w-full md:w-auto"
+              disabled={!!quantityError}
+              className={`mt-4 p-2 rounded transition w-full md:w-auto ${
+                quantityError 
+                  ? 'bg-gray-400 cursor-not-allowed' 
+                  : 'bg-indigo-500 text-white hover:bg-indigo-600'
+              }`}
             >
               افزودن به سبد خرید
             </button>
+            
             {isAdmin && (
               <div className="mt-4 flex space-x-2">
                 <button
-                  onClick={() => setShowEditPopup(true)} // Open popup instead of navigating
+                  onClick={() => setShowEditPopup(true)}
                   className="bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition"
                 >
                   ویرایش
