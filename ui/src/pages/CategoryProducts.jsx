@@ -60,8 +60,15 @@ const CategoryProducts = () => {
     }
   };
 
-  const calculateDiscountedPrice = (price, discount) =>
-    discount?.percent ? Math.round(price * (1 - discount.percent / 100)) : price;
+  const calculateFinalPrice = (product) => {
+    if (!product.discount?.percent) return product.price;
+
+    const discountAmount = product.price * (product.discount.percent / 100);
+    if (product.discount.max_discount && discountAmount > product.discount.max_discount) {
+      return Math.round(product.price - product.discount.max_discount);
+    }
+    return Math.round(product.price * (1 - product.discount.percent / 100));
+  };
 
   if (loading) return (
     <div css={containerStyles}>
@@ -134,7 +141,11 @@ const CategoryProducts = () => {
       {/* Show products */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {products.map((product) => {
-          const discountedPrice = calculateDiscountedPrice(product.price, product.discount);
+          const finalPrice = calculateFinalPrice(product);
+          const hasDiscount = product.discount?.percent;
+          const discountAmount = hasDiscount ? product.price * (product.discount.percent / 100) : 0;
+          const isMaxDiscountApplied = hasDiscount && product.discount.max_discount && discountAmount > product.discount.max_discount;
+
           return (
             <div key={product.id} className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition">
               <Link to={`/products/${product.id}`}>
@@ -148,11 +159,16 @@ const CategoryProducts = () => {
                 />
                 <h2 className="text-lg font-semibold mt-2 text-gray-800">{product.name}</h2>
                 <div className="mt-2 flex items-center">
-                  {product.discount?.percent ? (
+                  {hasDiscount ? (
                     <>
                       <span className="line-through text-gray-500 text-sm">{product.price.toLocaleString()} تومان</span>
-                      <span className="text-green-600 ml-2 font-medium">{discountedPrice.toLocaleString()} تومان</span>
-                      <span className="text-xs text-red-500 ml-2">{product.discount.percent}% تخفیف</span>
+                      <span className="text-green-600 ml-2 font-medium">{finalPrice.toLocaleString()} تومان</span>
+                      <span className="text-xs text-red-500 ml-2">
+                        {product.discount.percent}% تخفیف
+                        {isMaxDiscountApplied && (
+                          <span className="text-xs text-gray-500 mr-1"> (حداکثر {product.discount.max_discount.toLocaleString()} تومان)</span>
+                        )}
+                      </span>
                     </>
                   ) : (
                     <span className="text-gray-800 font-medium">{product.price.toLocaleString()} تومان</span>

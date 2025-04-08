@@ -148,7 +148,7 @@ const ProductPopup = ({ product, onSave, onDelete, onClose }) => {
           <input
             type="number"
             step="0.1"
-            placeholder="امتیاز (rate)"
+            placeholder="ضریب تعداد(rate)"
             value={formData.rate}
             onChange={(e) => setFormData({ ...formData, rate: e.target.value })}
             className="w-full p-2 mb-4 border rounded"

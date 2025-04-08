@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
 import CategoryPopup from '../components/CategoryPopup';
 import { getOptionByName, getCategories } from '../api/api';
@@ -107,6 +108,23 @@ const Home = () => {
       margin-bottom: 1rem;
       color: ${companyColorCode};
     `,
+    standardTitle: css`
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: ${companyColorCode};
+      margin-top: 0.5rem;
+    `,
+    instagramLink: css`
+      color: ${companyColorCode};
+      font-weight: 600;
+      font-size: 1.2rem;
+      text-decoration: none;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: ${adjustColor(companyColorCode, -30)};
+      }
+    `,
     primaryButton: css`
       padding: 0.8rem 2rem;
       border-radius: 8px;
@@ -151,13 +169,6 @@ const Home = () => {
       }
     `
   };
-
-  // Features data
-  const features = [
-    { icon: '⚙️', title: 'کیفیت ممتاز', description: 'استفاده از بهترین مواد اولیه' },
-    { icon: '⏱️', title: 'تحویل به‌موقع', description: 'ارسال سریع به سراسر کشور' },
-    { icon: '🤝', title: 'پشتیبانی حرفه‌ای', description: 'مشاوره و خدمات پس از فروش' },
-  ];
 
   // Static styles (don't depend on component state)
   const staticStyles = {
@@ -354,6 +365,77 @@ const Home = () => {
       color: #6b7280;
       font-size: 0.95rem;
     `,
+    standardsSection: css`
+      padding: 3rem 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+      background: white;
+      
+      @media (min-width: 768px) {
+        padding: 4rem 2rem;
+      }
+    `,
+    standardsGrid: css`
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    `,
+    standardCard: css`
+      background: #f9fafb;
+      border-radius: 12px;
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      
+      &:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      }
+    `,
+    standardImage: css`
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      margin-bottom: 0.5rem;
+    `,
+    instagramSection: css`
+      padding: 2rem 1rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      text-align: center;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+      
+      @media (min-width: 768px) {
+        padding: 3rem 2rem;
+      }
+    `,
+    instagramText: css`
+      font-size: 1.2rem;
+      color: #4b5563;
+      margin-bottom: 1rem;
+    `,
+    instagramIcon: css`
+      font-size: 2rem;
+      margin-right: 0.5rem;
+      vertical-align: middle;
+    `,
+    ctaSection: css`
+      background: linear-gradient(135deg, ${companyColorCode}, ${adjustColor(companyColorCode, -30)});
+      color: white;
+      padding: 3rem 1rem;
+      text-align: center;
+      
+      @media (min-width: 768px) {
+        padding: 4rem 2rem;
+      }
+    `,
     ctaTitle: css`
       font-size: 1.8rem;
       font-weight: 700;
@@ -373,6 +455,21 @@ const Home = () => {
       font-size: 1.1rem;
     `
   };
+
+  // Features data
+  const features = [
+    { icon: '⚙️', title: 'کیفیت ممتاز', description: 'استفاده از بهترین مواد اولیه' },
+    { icon: '⏱️', title: 'تحویل به‌موقع', description: 'ارسال سریع به سراسر کشور' },
+    { icon: '🤝', title: 'پشتیبانی حرفه‌ای', description: 'مشاوره و خدمات پس از فروش' },
+  ];
+
+  // Standards data (replace with your actual standards or fetch from API)
+  const standards = [
+    { image: 'https://picsum.photos/200/300', title: 'ISO 9001' },
+    { image: 'https://picsum.photos/200/300', title: 'ISO 14001' },
+    { image: 'https://picsum.photos/200/300', title: 'CE Marking' },
+    { image: 'https://picsum.photos/200/300', title: 'TÜV Certified' },
+  ];
 
   return (
     <div css={staticStyles.container}>
@@ -430,7 +527,12 @@ const Home = () => {
                 )}
                 <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
                 <p css={staticStyles.categoryDescription}>{category.description}</p>
-                <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
+                <Link
+                  key={category.id}
+                  to={`/categories/${category.id}`}
+                >
+                  <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
+                </Link>
               </div>
             ))}
             {/* Duplicate items for seamless looping */}
@@ -445,7 +547,12 @@ const Home = () => {
                 )}
                 <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
                 <p css={staticStyles.categoryDescription}>{category.description}</p>
-                <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
+                <Link
+                  key={category.id}
+                  to={`/categories/${category.id}`}
+                >
+                  <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
+                </Link>
               </div>
             ))}
           </div>
@@ -464,6 +571,39 @@ const Home = () => {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Standards Section */}
+      <section css={staticStyles.standardsSection}>
+        <h2 css={dynamicStyles.sectionTitle}>استانداردها</h2>
+        <div css={staticStyles.standardsGrid}>
+          {standards.map((standard, index) => (
+            <div key={index} css={staticStyles.standardCard}>
+              <img 
+                src={standard.image} 
+                alt={standard.title} 
+                css={staticStyles.standardImage}
+              />
+              <h3 css={dynamicStyles.standardTitle}>{standard.title}</h3>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Instagram Section */}
+      <section css={staticStyles.instagramSection}>
+        <p css={staticStyles.instagramText}>
+          <span css={staticStyles.instagramIcon}>📷</span>
+          ما را در اینستاگرام دنبال کنید
+        </p>
+        <a
+          href="https://www.instagram.com/tooswasher"
+          target="_blank"
+          rel="noopener noreferrer"
+          css={dynamicStyles.instagramLink}
+        >
+          @tooswasher
+        </a>
       </section>
 
       {/* CTA Section with dynamic background */}

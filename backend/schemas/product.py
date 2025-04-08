@@ -1,11 +1,10 @@
-# schemas/product.py
 from pydantic import BaseModel
 from typing import Optional, Dict
 from schemas.category import Category  # Assuming this exists
 
 class DiscountInfo(BaseModel):
     id: int
-    code: str
+    code: Optional[str] = None  # Changed to optional
     percent: float
     max_discount: Optional[float] = None
 
@@ -36,7 +35,7 @@ class Product(ProductBase):
     id: int
     owner_id: int
     category: Category
-    discount: Optional[DiscountInfo] = None  # Populated for logged-in users
+    discount: Optional[DiscountInfo] = None  # Already optional
 
     class Config:
-        from_attributes = True  
+        from_attributes = True

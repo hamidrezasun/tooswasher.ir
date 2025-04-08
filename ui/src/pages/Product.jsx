@@ -101,8 +101,17 @@ const Product = () => {
     }
   };
 
-  const calculateDiscountedPrice = (price, discount) =>
-    discount?.percent ? Math.round(price * (1 - discount.percent / 100)) : price;
+  const calculateDiscountedPrice = (price, discount) => {
+    if (!discount?.percent) return price;
+
+    const discountAmount = price * (discount.percent / 100);
+    // If max_discount exists and discount exceeds it, cap the discount
+    if (discount.max_discount && discountAmount > discount.max_discount) {
+      return Math.round(price - discount.max_discount);
+    }
+    // Otherwise, apply the percentage discount
+    return Math.round(price * (1 - discount.percent / 100));
+  };
 
   if (error && !error.includes('اضافه شد')) return <div className="text-center text-red-500 mt-20">{error}</div>;
   if (!product) return <div className="text-center mt-20">در حال بارگذاری...</div>;
@@ -127,6 +136,9 @@ const Product = () => {
                   <span className="line-through text-gray-500 text-sm">{product.price.toLocaleString()} تومان</span>
                   <span className="text-green-600 ml-2 font-medium">{discountedPrice.toLocaleString()} تومان</span>
                   <span className="text-xs text-red-500 ml-2">{product.discount.percent}% تخفیف</span>
+                  {product.discount.max_discount && (
+                    <span className="text-xs text-gray-500 ml-2">(حداکثر {product.discount.max_discount.toLocaleString()} تومان)</span>
+                  )}
                 </>
               ) : (
                 <span className="text-gray-800 font-medium">{product.price.toLocaleString()} تومان</span>

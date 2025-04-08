@@ -33,6 +33,16 @@ const paginationStyles = css`
   }
 `;
 
+const calculateFinalPrice = (price, discount) => {
+  if (!discount?.percent) return price;
+  
+  const discountAmount = price * (discount.percent / 100);
+  if (discount.max_discount && discountAmount > discount.max_discount) {
+    return Math.round(price - discount.max_discount);
+  }
+  return Math.round(price * (1 - discount.percent / 100));
+};
+
 const Products = () => {
   const [products, setProducts] = useState([]);
   const [error, setError] = useState(null);
@@ -77,40 +87,50 @@ const Products = () => {
         <h1 className="text-3xl font-bold mb-6 text-gray-800">محصولات</h1>
         
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {products.map((product) => (
-            <Link
-              key={product.id}
-              to={`/products/${product.id}`}
-              className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition hover:translate-y-[-2px]"
-            >
-              <img
-                src={product.image || 'https://via.placeholder.com/300'}
-                alt={product.name}
-                className="w-full h-48 object-cover rounded-md mb-4"
-                loading="lazy"
-              />
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h2>
-              {product.discount?.percent ? (
-                <div className="mb-2">
-                  <span className="text-green-600">
-                    تخفیف: {product.discount.percent}%
-                  </span>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className="text-gray-500 line-through">
-                      {product.price.toLocaleString()} تومان
+          {products.map((product) => {
+            const finalPrice = calculateFinalPrice(product.price, product.discount);
+            const hasDiscount = product.discount?.percent;
+            const discountAmount = hasDiscount ? product.price * (product.discount.percent / 100) : 0;
+            const isMaxDiscountApplied = hasDiscount && product.discount.max_discount && discountAmount > product.discount.max_discount;
+
+            return (
+              <Link
+                key={product.id}
+                to={`/products/${product.id}`}
+                className="bg-white p-4 rounded-lg shadow-md hover:shadow-lg transition hover:translate-y-[-2px]"
+              >
+                <img
+                  src={product.image || 'https://via.placeholder.com/300'}
+                  alt={product.name}
+                  className="w-full h-48 object-cover rounded-md mb-4"
+                  loading="lazy"
+                />
+                <h2 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h2>
+                {hasDiscount ? (
+                  <div className="mb-2">
+                    <span className="text-green-600">
+                      تخفیف: {product.discount.percent}%
+                      {isMaxDiscountApplied && (
+                        <span className="text-xs text-gray-500 mr-1"> (حداکثر {product.discount.max_discount.toLocaleString()} تومان)</span>
+                      )}
                     </span>
-                    <span className="text-indigo-600 font-bold">
-                      {(product.price * (1 - product.discount.percent / 100)).toLocaleString()} تومان
-                    </span>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="text-gray-500 line-through">
+                        {product.price.toLocaleString()} تومان
+                      </span>
+                      <span className="text-indigo-600 font-bold">
+                        {finalPrice.toLocaleString()} تومان
+                      </span>
+                    </div>
                   </div>
-                </div>
-              ) : (
-                <p className="text-indigo-600 font-bold">
-                  {product.price.toLocaleString()} تومان
-                </p>
-              )}
-            </Link>
-          ))}
+                ) : (
+                  <p className="text-indigo-600 font-bold">
+                    {product.price.toLocaleString()} تومان
+                  </p>
+                )}
+              </Link>
+            );
+          })}
         </div>
 
         {/* Pagination Controls */}

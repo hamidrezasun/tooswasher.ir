@@ -247,7 +247,7 @@ export default {
   uploadFile,
   downloadFile,
   listFiles,
-  getUsersByRole, // Deprecated
+  getUsersByRole,
   getOptions,
   getOptionById,
   getOptionByName,

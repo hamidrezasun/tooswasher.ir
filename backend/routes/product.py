@@ -72,7 +72,7 @@ def delete_product(
         raise HTTPException(status_code=404, detail="Product not found")
     return None
 
-@router.get("/search/", response_model=List[product_schemas.ProductBase], description="Search products by name.")
+@router.get("/search/", response_model=List[product_schemas.Product], description="Search products by name.")
 def search_products(
     query: str,
     skip: int = 0,
