@@ -41,7 +41,7 @@ const Pages = () => {
   return (
     <div css={containerStyles}>
       <Navbar />
-      <div className="max-w-4xl" dangerouslySetInnerHTML={{ __html: page.body || '<p>محتوایی برای این صفحه تعریف نشده است.</p>' }}>
+      <div class="max-w-6xl mx-auto px-4"dangerouslySetInnerHTML={{ __html: page.body || '<p>محتوایی برای این صفحه تعریف نشده است.</p>' }}>
       </div>
     </div>
   );

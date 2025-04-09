@@ -10,6 +10,7 @@ import CategoryPopup from './CategoryPopup';
 import SearchPopup from './SearchPopup';
 import SideNavbar from './SideNavbar';
 import CartPopup from './CartPopup';
+import UserProfilePopup from './UserProfilePopup';
 import {
   navbarStyles,
   containerStyles,
@@ -19,7 +20,6 @@ import {
   authCartStyles,
   loginButtonStyles,
   registerButtonStyles,
-  logoutButtonStyles,
   cartButtonStyles,
   categoryButtonStyles,
   searchButtonStyles,
@@ -29,6 +29,16 @@ import {
   menuItemStyles,
 } from './NavbarStyles';
 
+const clickableUserInfoStyles = css`
+  ${userInfoStyles};
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  &:hover {
+    background-color: #f3f4f6;
+  }
+`;
+
 const Navbar = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -36,14 +46,16 @@ const Navbar = () => {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isSideNavbarOpen, setIsSideNavbarOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [user, setUser] = useState(null);
   const [menuPages, setMenuPages] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [loginMessage, setLoginMessage] = useState('');
   const [showLoginMessage, setShowLoginMessage] = useState(false);
-  const [companyName, setCompanyName] = useState('company_name'); // Default value
-  const [companyColorCode, setCompanyColorCode] = useState('#2563eb'); // Default color
+  const [companyName, setCompanyName] = useState('company_name');
+  const [companyColorCode, setCompanyColorCode] = useState('#2563eb');
+  const [logoUrl, setLogoUrl] = useState('');
 
   const fetchCart = async () => {
     if (isAuthenticated()) {
@@ -54,7 +66,7 @@ const Navbar = () => {
         console.error('Failed to fetch cart:', err);
       }
     } else {
-      setCartCount(0); // Reset cart count if not authenticated
+      setCartCount(0);
     }
   };
 
@@ -66,7 +78,7 @@ const Navbar = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ productId, quantity }),
       });
-      await fetchCart(); // Update cart count
+      await fetchCart();
       setLoginMessage('محصول به سبد خرید اضافه شد!');
       setShowLoginMessage(true);
       setTimeout(() => setShowLoginMessage(false), 3000);
@@ -77,21 +89,32 @@ const Navbar = () => {
       setTimeout(() => setShowLoginMessage(false), 3000);
     }
   };
-
+  useEffect(() => {
+    if (logoUrl) {
+      const favicon = document.getElementById('favicon');
+      if (favicon) {
+        favicon.href = logoUrl;
+      }
+      
+      // Also create a fallback for Apple touch icons
+      const appleTouchIcon = document.querySelector("link[rel='apple-touch-icon']");
+      if (appleTouchIcon) {
+        appleTouchIcon.href = logoUrl;
+      }
+    }
+  }, [logoUrl]);
+  
   useEffect(() => {
     const fetchData = async () => {
       try {
         const companyNameOption = await getOptionByName('company_name');
-        const companyColorCodeOption = await getOptionByName('company_color_code'); // Fetch color
-        if (companyNameOption) {
-          setCompanyName(companyNameOption.option_value);
-        }
-        if (companyColorCodeOption) {
-          setCompanyColorCode(companyColorCodeOption.option_value); // Set color
-        }
+        const companyColorCodeOption = await getOptionByName('company_color_code');
+        const logoUrlOption = await getOptionByName('logo_url');
+        if (companyNameOption) setCompanyName(companyNameOption.option_value);
+        if (companyColorCodeOption) setCompanyColorCode(companyColorCodeOption.option_value);
+        if (logoUrlOption) setLogoUrl(logoUrlOption.option_value);
       } catch (error) {
-        console.error("Failed to fetch company name or color:", error);
-        // Keep the default values
+        console.error("Failed to fetch company data:", error);
       }
 
       if (isAuthenticated()) {
@@ -104,7 +127,7 @@ const Navbar = () => {
           logoutUser();
         }
       } else {
-        setUser(null); // Ensure user is null if not authenticated
+        setUser(null);
         setCartCount(0);
       }
       try {
@@ -128,7 +151,7 @@ const Navbar = () => {
       setTimeout(() => setShowLoginMessage(false), 3000);
     } catch (err) {
       console.error('Failed to fetch profile after login:', err);
-      logoutUser(); // Log out if profile fetch fails (e.g., token is invalid)
+      logoutUser();
       setUser(null);
       setCartCount(0);
       setLoginMessage('خطا در بارگذاری اطلاعات کاربر، لطفاً دوباره وارد شوید');
@@ -137,36 +160,35 @@ const Navbar = () => {
     }
   };
 
-  const handleLogout = () => {
-    logoutUser();
-    setUser(null);
-    setCartCount(0);
-    setLoginMessage('خروج با موفقیت انجام شد!');
-    setShowLoginMessage(true);
-    setTimeout(() => setShowLoginMessage(false), 3000);
-  };
-
   const isStaffOrAdmin = user && (user.role === 'staff' || user.role === 'admin');
 
-  // Apply dynamic styles
   const dynamicLogoStyles = css`
     ${logoStyles};
-    color: ${companyColorCode}; // Use fetched color
+    color: ${companyColorCode};
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     &:hover {
-      color: ${adjustColor(companyColorCode, -20)}; // Darker on hover
+      color: ${adjustColor(companyColorCode, -20)};
     }
+  `;
+
+  const logoImageStyles = css`
+    max-height: 40px;
+    max-width: 40px;
+    height: auto;
+    width: auto;
+    object-fit: contain;
   `;
 
   const dynamicCategoryButtonStyles = css`
     ${categoryButtonStyles};
-    background: linear-gradient(135deg, ${companyColorCode} 0%, ${
-      adjustColor(companyColorCode, 20)
-    } 100%);
+    background: linear-gradient(135deg, ${companyColorCode} 0%, ${adjustColor(companyColorCode, 20)} 100%);
     &:hover {
       background: linear-gradient(135deg, ${adjustColor(companyColorCode, -20)} 0%, ${companyColorCode} 100%);
     }
   `;
-    // Helper function to adjust color brightness
+
   function adjustColor(color, amount) {
     let R = parseInt(color.substring(1, 3), 16);
     let G = parseInt(color.substring(3, 5), 16);
@@ -176,13 +198,13 @@ const Navbar = () => {
     G = G + amount;
     B = B + amount;
 
-    R = (R < 0) ? 0 : ((R > 255) ? 255 : R);
-    G = (G < 0) ? 0 : ((G > 255) ? 255 : G);
-    B = (B < 0) ? 0 : ((B > 255) ? 255 : B);
+    R = R < 0 ? 0 : R > 255 ? 255 : R;
+    G = G < 0 ? 0 : G > 255 ? 255 : G;
+    B = B < 0 ? 0 : B > 255 ? 255 : B;
 
-    const RR = ((R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16));
-    const GG = ((G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16));
-    const BB = ((B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16));
+    const RR = R.toString(16).length === 1 ? "0" + R.toString(16) : R.toString(16);
+    const GG = G.toString(16).length === 1 ? "0" + G.toString(16) : G.toString(16);
+    const BB = B.toString(16).length === 1 ? "0" + B.toString(16) : B.toString(16);
 
     return "#" + RR + GG + BB;
   }
@@ -192,6 +214,13 @@ const Navbar = () => {
       <div css={containerStyles}>
         <div css={topBarStyles}>
           <Link to="/" css={dynamicLogoStyles}>
+            {logoUrl && (
+              <img
+                src={logoUrl || 'https://via.placeholder.com/40'}
+                alt={`${companyName} logo`}
+                css={logoImageStyles}
+              />
+            )}
             {companyName}
           </Link>
           <input
@@ -209,12 +238,12 @@ const Navbar = () => {
               جستجو
             </button>
             {user ? (
-              <>
-                <span css={userInfoStyles}>{user.name || user.username} {user.last_name || ''}</span>
-                <button css={logoutButtonStyles} onClick={handleLogout}>
-                  خروج
-                </button>
-              </>
+              <span 
+                css={clickableUserInfoStyles} 
+                onClick={() => setIsProfileOpen(true)}
+              >
+                {user.name || user.username} {user.last_name || ''}
+              </span>
             ) : (
               <>
                 <button css={loginButtonStyles} onClick={() => setIsLoginOpen(true)}>
@@ -276,7 +305,7 @@ const Navbar = () => {
         <LoginPopup
           onClose={() => setIsLoginOpen(false)}
           setIsRegisterOpen={setIsRegisterOpen}
-          onLoginSuccess={handleLoginSuccess} // Pass callback for login success
+          onLoginSuccess={handleLoginSuccess}
         />
       )}
       {isRegisterOpen && <RegisterPopup onClose={() => setIsRegisterOpen(false)} setIsLoginOpen={setIsLoginOpen} />}
@@ -284,9 +313,9 @@ const Navbar = () => {
       {isSearchOpen && <SearchPopup onClose={() => setIsSearchOpen(false)} />}
       {isStaffOrAdmin && isSideNavbarOpen && <SideNavbar onClose={() => setIsSideNavbarOpen(false)} />}
       {isCartOpen && <CartPopup onClose={() => setIsCartOpen(false)} />}
+      {isProfileOpen && <UserProfilePopup onClose={() => setIsProfileOpen(false)} />}
     </nav>
   );
 };
 
 export default Navbar;
-

@@ -1,19 +1,26 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { 
-  getPages, 
-  createPage, 
-  updatePage, 
+import grapesjs from 'grapesjs';
+import 'grapesjs/dist/css/grapes.min.css';
+import gjsPresetWebpage from 'grapesjs-preset-webpage';
+import gjsBasicBlocks from 'grapesjs-blocks-basic';
+import gjsPluginForms from 'grapesjs-plugin-forms';
+import {
+  getPages,
+  createPage,
+  updatePage,
   deletePage,
   getUserProfile,
-  searchPages
+  searchPages,
+  getPageById
 } from '../api/api';
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
 
+// CSS Styles
 const searchBarStyles = css`
   width: 100%;
   max-width: 400px;
@@ -78,6 +85,7 @@ const inputStyles = css`
   padding: 0.5rem;
   border: 1px solid #ccc;
   border-radius: 0.375rem;
+  width: 100%;
 `;
 
 const textareaStyles = css`
@@ -89,6 +97,27 @@ const checkboxStyles = css`
   margin-left: 0.5rem;
 `;
 
+const editorContainerStyles = css`
+  display: flex;
+  min-height: 500px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  overflow: hidden;
+`;
+
+const editorPanelStyles = css`
+  width: 300px;
+  background: #f5f5f5;
+  border-left: 1px solid #ccc;
+  overflow-y: auto;
+`;
+
+const editorCanvasStyles = css`
+  flex-grow: 1;
+  background-color: white;
+  position: relative;
+`;
+
 const AdminPages = () => {
   const [pages, setPages] = useState([]);
   const [filteredPages, setFilteredPages] = useState([]);
@@ -97,12 +126,16 @@ const AdminPages = () => {
   const [selectedPage, setSelectedPage] = useState(null);
   const [showAddForm, setShowAddForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [useVisualEditor, setUseVisualEditor] = useState(false);
+  const [editorInstance, setEditorInstance] = useState(null);
+  const editorRef = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
     body: '',
     is_in_menu: false
   });
 
+  // Fetch pages and user data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -120,6 +153,7 @@ const AdminPages = () => {
     fetchData();
   }, []);
 
+  // Search functionality
   useEffect(() => {
     const search = async () => {
       if (searchTerm.trim() === '') {
@@ -135,6 +169,209 @@ const AdminPages = () => {
     };
     search();
   }, [searchTerm, pages]);
+
+  // Initialize GrapesJS editor
+  useEffect(() => {
+    if (useVisualEditor && editorRef.current) {
+      const editor = grapesjs.init({
+        container: editorRef.current,
+        fromElement: true,
+        storageManager: false,
+        rtl: true,
+        panels: { defaults: [] },
+        plugins: [
+          gjsPresetWebpage,
+          gjsBasicBlocks,
+          gjsPluginForms
+        ],
+        pluginsOpts: {
+          [gjsPresetWebpage]: {
+            blocks: ['column1', 'column2', 'column3', 'column3-7', 'text', 'link', 'image', 'video'],
+            flexGrid: true,
+          },
+          [gjsBasicBlocks]: {},
+          [gjsPluginForms]: {}
+        },
+        blockManager: {
+          appendTo: '#blocks',
+          blocks: [
+            {
+              id: 'section',
+              label: 'Section',
+              category: 'Layout',
+              content: '<section class="gjs-section" style="padding: 50px 0; max-width: 1200px; margin: 0 auto;"></section>',
+            },
+            {
+              id: 'container',
+              label: 'Container',
+              category: 'Layout',
+              content: '<div class="container" style="max-width: 1200px; margin: 0 auto;"></div>',
+            },
+            {
+              id: 'row',
+              label: 'Row',
+              category: 'Layout',
+              content: '<div class="row" style="display: flex; flex-wrap: wrap; gap: 15px; flex-direction: row;"></div>',
+            },
+            {
+              id: 'column2',
+              label: '2 Columns',
+              category: 'Layout',
+              content: `<div style="display: flex; gap: 15px; width: 100%; flex-direction: row;">
+                <div style="flex: 1; min-width: 200px;"></div>
+                <div style="flex: 1; min-width: 200px;"></div>
+              </div>`,
+            },
+            {
+              id: 'column3',
+              label: '3 Columns',
+              category: 'Layout',
+              content: `<div style="display: flex; gap: 15px; width: 100%; flex-direction: row;">
+                <div style="flex: 1; min-width: 200px;"></div>
+                <div style="flex: 1; min-width: 200px;"></div>
+                <div style="flex: 1; min-width: 200px;"></div>
+              </div>`,
+            },
+            {
+              id: 'text',
+              label: 'Text',
+              category: 'Basic',
+              content: '<div class="gjs-text">متن خود را اینجا وارد کنید</div>',
+            },
+            {
+              id: 'image',
+              label: 'Image',
+              category: 'Basic',
+              content: '<img class="gjs-img" src="/placeholder-image.jpg" style="max-width:100%; height: auto;">',
+            },
+            {
+              id: 'button',
+              label: 'Button',
+              category: 'Basic',
+              content: '<button class="gjs-btn" style="padding: 8px 16px; background: #3b82f6; color: white; border: none; border-radius: 4px;">دکمه</button>',
+            },
+            {
+              id: 'form',
+              label: 'Form',
+              category: 'Forms',
+              content: '<form class="gjs-form" style="display: flex; flex-direction: column; gap: 10px;"></form>',
+            },
+            {
+              id: 'input',
+              label: 'Input',
+              category: 'Forms',
+              content: '<input type="text" class="gjs-input" placeholder="متن را وارد کنید" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">',
+            },
+            {
+              id: 'video',
+              label: 'Video',
+              category: 'Media',
+              content: `
+                <div class="gjs-video">
+                  <iframe width="560" height="315" src="https://www.youtube.com/embed/jNQXAC9IVRw" 
+                  frameborder="0" allowfullscreen></iframe>
+                </div>
+              `,
+            }
+          ]
+        },
+        assetManager: {
+          upload: false,
+          assets: []
+        },
+        styleManager: {
+          sectors: [{
+            name: 'General',
+            properties: [
+              {
+                name: 'Background',
+                property: 'background',
+                type: 'color',
+              }, {
+                name: 'Color',
+                property: 'color',
+                type: 'color',
+              }, {
+                name: 'Font Size',
+                property: 'font-size',
+                type: 'number',
+                units: ['px', 'em'],
+              }, {
+                name: 'Text Align',
+                property: 'text-align',
+                type: 'radio',
+                defaults: 'right',
+                list: [
+                  { value: 'right', name: 'Right', className: 'fa fa-align-right' },
+                  { value: 'center', name: 'Center', className: 'fa fa-align-center' },
+                  { value: 'left', name: 'Left', className: 'fa fa-align-left' },
+                  { value: 'justify', name: 'Justify', className: 'fa fa-align-justify' }
+                ],
+              }
+            ],
+          }]
+        }
+      });
+
+      // Apply RTL fixes
+      const style = document.createElement('style');
+      style.innerHTML = `
+        .gjs-block {
+          float: right;
+        }
+        .gjs-layer-item__name {
+          text-align: right;
+        }
+        .gjs-sm-sector {
+          text-align: right;
+        }
+        .gjs-sm-properties {
+          direction: rtl;
+        }
+        .gjs-clm-tags {
+          right: auto;
+          left: 10px;
+        }
+        .gjs-clm-tag-status {
+          float: left;
+        }
+        .gjs-pn-btn {
+          float: left;
+        }
+        .gjs-one-bg {
+          background-color: #f5f5f5;
+        }
+        .gjs-two-color {
+          color: #777;
+        }
+        .gjs-three-bg {
+          background-color: #3b97e3;
+        }
+        .gjs-four-color {
+          color: #3b97e3;
+        }
+      `;
+      document.head.appendChild(style);
+
+      setEditorInstance(editor);
+      
+      if (selectedPage && formData.body) {
+        editor.setComponents(formData.body);
+      }
+
+      editor.on('update', () => {
+        setFormData(prev => ({
+          ...prev,
+          body: editor.getHtml()
+        }));
+      });
+
+      return () => {
+        editor.destroy();
+        document.head.removeChild(style);
+      };
+    }
+  }, [useVisualEditor, selectedPage]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -186,23 +423,33 @@ const AdminPages = () => {
   };
 
   const resetForm = () => {
-    setFormData({
-      name: '',
-      body: '',
-      is_in_menu: false
-    });
+    setFormData({ name: '', body: '', is_in_menu: false });
     setSelectedPage(null);
     setShowAddForm(false);
+    setUseVisualEditor(false);
+    if (editorInstance) {
+      editorInstance.destroy();
+      setEditorInstance(null);
+    }
   };
 
-  const handleEditPage = (page) => {
-    setSelectedPage(page);
-    setFormData({
-      name: page.name,
-      body: page.body || '',
-      is_in_menu: page.is_in_menu || false
-    });
-    setShowAddForm(true);
+  const handleEditPage = async (page) => {
+    try {
+      const fullPageData = await getPageById(page.id);
+      setSelectedPage(fullPageData);
+      setFormData({
+        name: fullPageData.name,
+        body: fullPageData.body || '',
+        is_in_menu: fullPageData.is_in_menu || false
+      });
+      setShowAddForm(true);
+      
+      if (useVisualEditor && editorInstance) {
+        editorInstance.setComponents(fullPageData.body || '');
+      }
+    } catch (err) {
+      setError(err.message || 'خطا در بارگذاری صفحه');
+    }
   };
 
   if (isAdmin === false) return <Navigate to="/" />;
@@ -251,13 +498,33 @@ const AdminPages = () => {
                 />
               </div>
               <div>
-                <label className="block mb-1">محتوای صفحه:</label>
-                <textarea
-                  name="body"
-                  value={formData.body}
-                  onChange={handleInputChange}
-                  css={textareaStyles}
-                />
+                <label className="block mb-1 flex justify-between items-center">
+                  <span>محتوای صفحه:</span>
+                  <span>
+                    <input
+                      type="checkbox"
+                      checked={useVisualEditor}
+                      onChange={(e) => setUseVisualEditor(e.target.checked)}
+                      css={checkboxStyles}
+                    />{' '}
+                    استفاده از ویرایشگر گرافیکی
+                  </span>
+                </label>
+                {!useVisualEditor ? (
+                  <textarea
+                    name="body"
+                    value={formData.body}
+                    onChange={handleInputChange}
+                    css={textareaStyles}
+                  />
+                ) : (
+                  <div css={editorContainerStyles}>
+                    <div css={editorCanvasStyles} ref={editorRef}></div>
+                    <div css={editorPanelStyles}>
+                      <div id="blocks"></div>
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="flex items-center">
                 <input
@@ -322,9 +589,8 @@ const AdminPages = () => {
                   </div>
                   {page.body && (
                     <div className="mt-3 p-3 bg-gray-50 rounded">
-                      <p className="text-gray-700 line-clamp-3">
-                        {page.body.substring(0, 200)}...
-                      </p>
+                      <div dangerouslySetInnerHTML={{ __html: page.body.substring(0, 200) }} />
+                      {page.body.length > 200 && '...'}
                     </div>
                   )}
                 </div>

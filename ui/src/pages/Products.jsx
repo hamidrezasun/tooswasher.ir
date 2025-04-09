@@ -33,6 +33,19 @@ const paginationStyles = css`
   }
 `;
 
+const productImageStyles = css`
+  max-width: 100%;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  object-fit: contain;    // Keeps the full image visible without cropping
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: block;
+  margin-left: auto;      // Center the image horizontally
+  margin-right: auto;
+`;
+
 const calculateFinalPrice = (price, discount) => {
   if (!discount?.percent) return price;
   
@@ -49,7 +62,7 @@ const Products = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
-  const itemsPerPage = 9; // Number of items per page
+  const itemsPerPage = 9;
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -59,7 +72,6 @@ const Products = () => {
         const totalItems = allProducts.length;
         setTotalPages(Math.ceil(totalItems / itemsPerPage));
         
-        // Calculate the products for current page
         const startIndex = (currentPage - 1) * itemsPerPage;
         const paginatedProducts = allProducts.slice(startIndex, startIndex + itemsPerPage);
         setProducts(paginatedProducts);
@@ -102,7 +114,7 @@ const Products = () => {
                 <img
                   src={product.image || 'https://via.placeholder.com/300'}
                   alt={product.name}
-                  className="w-full h-48 object-cover rounded-md mb-4"
+                  css={productImageStyles} // Updated styling
                   loading="lazy"
                 />
                 <h2 className="text-xl font-semibold text-gray-800 mb-2">{product.name}</h2>
@@ -133,7 +145,6 @@ const Products = () => {
           })}
         </div>
 
-        {/* Pagination Controls */}
         {totalPages > 1 && (
           <div css={paginationStyles}>
             <button

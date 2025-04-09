@@ -8,6 +8,18 @@ import { getProductById, addToCart, updateProduct, deleteProduct, getUserProfile
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
 
+const productImageStyles = css`
+  max-width: 100%;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  object-fit: contain;    // Keeps the full image visible without cropping
+  border-radius: 0.375rem; // Matches 'rounded' (6px)
+  display: block;
+  margin-left: auto;      // Center the image horizontally
+  margin-right: auto;
+`;
+
 const Product = () => {
   const { productId } = useParams();
   const [product, setProduct] = useState(null);
@@ -23,7 +35,6 @@ const Product = () => {
       try {
         const data = await getProductById(productId);
         setProduct(data);
-        // Set initial quantity to minimum order if it exists
         if (data.minimum_order) {
           setQuantity(data.minimum_order);
         }
@@ -49,12 +60,10 @@ const Product = () => {
     
     let error = '';
     
-    // Check minimum order
     if (product.minimum_order && qty < product.minimum_order) {
       error = `حداقل تعداد سفارش ${product.minimum_order} می‌باشد`;
     }
     
-    // Check rate (if product has rate)
     if (product.rate && qty % product.rate !== 0) {
       error = `تعداد باید مضربی از ${product.rate} باشد`;
     }
@@ -92,7 +101,6 @@ const Product = () => {
       const updated = await updateProduct(productId, data);
       setProduct(updated);
       setShowEditPopup(false);
-      // Reset quantity if minimum order changed
       if (data.minimum_order) {
         setQuantity(data.minimum_order);
       }
@@ -105,11 +113,9 @@ const Product = () => {
     if (!discount?.percent) return price;
 
     const discountAmount = price * (discount.percent / 100);
-    // If max_discount exists and discount exceeds it, cap the discount
     if (discount.max_discount && discountAmount > discount.max_discount) {
       return Math.round(price - discount.max_discount);
     }
-    // Otherwise, apply the percentage discount
     return Math.round(price * (1 - discount.percent / 100));
   };
 
@@ -126,7 +132,7 @@ const Product = () => {
           <img
             src={product.image || 'https://via.placeholder.com/400'}
             alt={product.name}
-            className="w-full md:w-1/2 h-64 object-cover rounded"
+            css={productImageStyles} // Replace className with css prop
           />
           <div className="md:ml-6 mt-4 md:mt-0 flex-1">
             <h1 className="text-2xl font-bold text-gray-800">{product.name}</h1>
@@ -146,7 +152,6 @@ const Product = () => {
             </div>
             <p className="mt-4 text-gray-600">{product.description || 'توضیحات در دسترس نیست'}</p>
             
-            {/* Quantity selector */}
             <div className="mt-4">
               <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-1">
                 تعداد:

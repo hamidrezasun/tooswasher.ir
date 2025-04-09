@@ -11,7 +11,7 @@ const Home = () => {
   const [companyName, setCompanyName] = useState('');
   const [titleDescription, setTitleDescription] = useState('');
   const [companyDescription, setCompanyDescription] = useState('');
-  const [companyColorCode, setCompanyColorCode] = useState('#b91c1c'); // Default color
+  const [companyColorCode, setCompanyColorCode] = useState('#b91c1c');
   const [logoUrl, setLogoUrl] = useState('');
   const [categories, setCategories] = useState([]);
 
@@ -23,14 +23,13 @@ const Home = () => {
         const companyDescriptionOption = await getOptionByName('company_description');
         const companyColorCodeOption = await getOptionByName('company_color_code');
         const logoUrlOption = await getOptionByName('logo_url');
-        
+
         if (companyNameOption) setCompanyName(companyNameOption.option_value);
         if (titleDescriptionOption) setTitleDescription(titleDescriptionOption.option_value);
         if (companyDescriptionOption) setCompanyDescription(companyDescriptionOption.option_value);
         if (companyColorCodeOption) setCompanyColorCode(companyColorCodeOption.option_value);
         if (logoUrlOption) setLogoUrl(logoUrlOption.option_value);
-        
-        // Fetch categories without parents
+
         const categoriesData = await getCategories();
         const parentCategories = categoriesData.filter(category => !category.parent_id);
         setCategories(parentCategories);
@@ -41,29 +40,24 @@ const Home = () => {
     fetchData();
   }, []);
 
-  // Helper function to adjust color brightness
-  function adjustColor(color, amount) {
+  const adjustColor = (color, amount) => {
     if (!color) return '#ffffff';
     let R = parseInt(color.substring(1, 3), 16);
     let G = parseInt(color.substring(3, 5), 16);
     let B = parseInt(color.substring(5, 7), 16);
 
-    R = R + amount;
-    G = G + amount;
-    B = B + amount;
+    R = Math.max(0, Math.min(255, R + amount));
+    G = Math.max(0, Math.min(255, G + amount));
+    B = Math.max(0, Math.min(255, B + amount));
 
-    R = (R < 0) ? 0 : ((R > 255) ? 255 : R);
-    G = (G < 0) ? 0 : ((G > 255) ? 255 : G);
-    B = (B < 0) ? 0 : ((B > 255) ? 255 : B);
+    const toHex = num => {
+      const hex = num.toString(16);
+      return hex.length === 1 ? `0${hex}` : hex;
+    };
 
-    const RR = (R.toString(16).length === 1) ? "0" + R.toString(16) : R.toString(16);
-    const GG = (G.toString(16).length === 1) ? "0" + G.toString(16) : G.toString(16);
-    const BB = (B.toString(16).length === 1) ? "0" + B.toString(16) : B.toString(16);
+    return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
+  };
 
-    return "#" + RR + GG + BB;
-  }
-
-  // Dynamic styles that use companyColorCode
   const dynamicStyles = {
     hero: css`
       display: flex;
@@ -86,7 +80,7 @@ const Home = () => {
       font-weight: 700;
       margin-bottom: 1.5rem;
       color: ${companyColorCode};
-      
+
       @media (min-width: 768px) {
         font-size: 2.2rem;
       }
@@ -135,7 +129,7 @@ const Home = () => {
       font-size: 1rem;
       background-color: #ffffff;
       color: ${companyColorCode};
-      
+
       &:hover {
         background-color: ${adjustColor(companyColorCode, 80)};
         transform: translateY(-2px);
@@ -143,7 +137,7 @@ const Home = () => {
       }
     `,
     categoryButton: css`
-      padding: 0.8rem 2rem;
+      padding: 0.6rem 1.5rem;
       border-radius: 8px;
       font-weight: 600;
       cursor: pointer;
@@ -152,8 +146,7 @@ const Home = () => {
       font-size: 1rem;
       background-color: ${companyColorCode};
       color: white;
-      padding: 0.6rem 1.5rem;
-      
+
       &:hover {
         background-color: ${adjustColor(companyColorCode, -30)};
       }
@@ -163,20 +156,19 @@ const Home = () => {
       color: white;
       padding: 3rem 1rem;
       text-align: center;
-      
+
       @media (min-width: 768px) {
         padding: 4rem 2rem;
       }
-    `
+    `,
   };
 
-  // Static styles (don't depend on component state)
   const staticStyles = {
     container: css`
       font-family: 'Vazir', sans-serif;
       direction: rtl;
       background: #f9fafb;
-      padding-top: 130px; /* Explicitly set to 10rem in px */
+      padding-top: 130px;
     `,
     heroContent: css`
       flex: 1;
@@ -189,7 +181,7 @@ const Home = () => {
       font-weight: 800;
       margin-bottom: 1rem;
       line-height: 1.2;
-      
+
       @media (min-width: 768px) {
         font-size: 3rem;
       }
@@ -198,7 +190,7 @@ const Home = () => {
       font-size: 1.1rem;
       opacity: 0.9;
       margin-bottom: 2rem;
-      
+
       @media (min-width: 768px) {
         font-size: 1.25rem;
       }
@@ -214,7 +206,9 @@ const Home = () => {
       max-width: 100%;
       height: auto;
       border-radius: 12px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    `,
+    grayLogo: css`
+      filter: grayscale(100%);
     `,
     buttonGroup: css`
       display: flex;
@@ -227,12 +221,11 @@ const Home = () => {
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s ease;
-      border: none;
+      border: 2px solid white;
       font-size: 1rem;
       background-color: transparent;
       color: white;
-      border: 2px solid white;
-      
+
       &:hover {
         background-color: rgba(255, 255, 255, 0.1);
       }
@@ -261,7 +254,7 @@ const Home = () => {
       color: #4b5563;
       line-height: 1.8;
       font-size: 1rem;
-      
+
       @media (min-width: 768px) {
         font-size: 1.1rem;
       }
@@ -272,7 +265,7 @@ const Home = () => {
       margin: 0 auto;
       position: relative;
       text-align: center;
-      
+
       @media (min-width: 768px) {
         padding: 4rem 2rem;
       }
@@ -283,7 +276,6 @@ const Home = () => {
       position: relative;
       margin-top: 2rem;
       -webkit-overflow-scrolling: touch;
-      
       scrollbar-width: none;
       &::-webkit-scrollbar {
         display: none;
@@ -297,12 +289,8 @@ const Home = () => {
       width: max-content;
 
       @keyframes scroll {
-        0% {
-          transform: translateX(50%);
-        }
-        100% {
-          transform: translateX(0);
-        }
+        0% { transform: translateX(50%); }
+        100% { transform: translateX(0); }
       }
 
       &:hover {
@@ -318,18 +306,23 @@ const Home = () => {
       text-align: center;
       min-width: 250px;
       flex-shrink: 0;
-      
+
       &:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
       }
     `,
     categoryImage: css`
-      width: 100%;
-      height: 150px;
-      object-fit: cover;
+      max-width: 100%;
+      max-height: 150px;
+      width: auto;
+      height: auto;
+      object-fit: contain;
       border-radius: 8px;
       margin-bottom: 1rem;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     `,
     categoryDescription: css`
       color: #6b7280;
@@ -341,7 +334,7 @@ const Home = () => {
       background: #fef2f2;
       margin: 0 auto;
       max-width: 1200px;
-      
+
       @media (min-width: 768px) {
         padding: 4rem 2rem;
       }
@@ -350,7 +343,7 @@ const Home = () => {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
-      
+
       @media (min-width: 768px) {
         grid-template-columns: repeat(3, 1fr);
       }
@@ -371,7 +364,7 @@ const Home = () => {
       margin: 0 auto;
       text-align: center;
       background: white;
-      
+
       @media (min-width: 768px) {
         padding: 4rem 2rem;
       }
@@ -391,7 +384,7 @@ const Home = () => {
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
-      
+
       &:hover {
         transform: translateY(-5px);
         box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
@@ -411,7 +404,7 @@ const Home = () => {
       background: #fff;
       border-radius: 12px;
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-      
+
       @media (min-width: 768px) {
         padding: 3rem 2rem;
       }
@@ -426,21 +419,11 @@ const Home = () => {
       margin-right: 0.5rem;
       vertical-align: middle;
     `,
-    ctaSection: css`
-      background: linear-gradient(135deg, ${companyColorCode}, ${adjustColor(companyColorCode, -30)});
-      color: white;
-      padding: 3rem 1rem;
-      text-align: center;
-      
-      @media (min-width: 768px) {
-        padding: 4rem 2rem;
-      }
-    `,
     ctaTitle: css`
       font-size: 1.8rem;
       font-weight: 700;
       margin-bottom: 1rem;
-      
+
       @media (min-width: 768px) {
         font-size: 2rem;
       }
@@ -453,17 +436,20 @@ const Home = () => {
     ctaButton: css`
       padding: 1rem 3rem;
       font-size: 1.1rem;
-    `
+    `,
+    footer: css`
+      padding: 2rem 1rem;
+      text-align: center;
+      background: #f9fafb;
+    `,
   };
 
-  // Features data
   const features = [
     { icon: '⚙️', title: 'کیفیت ممتاز', description: 'استفاده از بهترین مواد اولیه' },
     { icon: '⏱️', title: 'تحویل به‌موقع', description: 'ارسال سریع به سراسر کشور' },
     { icon: '🤝', title: 'پشتیبانی حرفه‌ای', description: 'مشاوره و خدمات پس از فروش' },
   ];
 
-  // Standards data (replace with your actual standards or fetch from API)
   const standards = [
     { image: 'https://picsum.photos/200/300', title: 'ISO 9001' },
     { image: 'https://picsum.photos/200/300', title: 'ISO 14001' },
@@ -474,14 +460,13 @@ const Home = () => {
   return (
     <div css={staticStyles.container}>
       <Navbar />
-      
-      {/* Hero Section */}
+
       <section css={dynamicStyles.hero}>
         <div css={staticStyles.heroContent}>
           <h1 css={staticStyles.heroTitle}>{companyName}</h1>
           <p css={staticStyles.heroSubtitle}>{titleDescription}</p>
           <div css={staticStyles.buttonGroup}>
-            <button 
+            <button
               onClick={() => setIsCategoryOpen(true)}
               css={dynamicStyles.primaryButton}
             >
@@ -493,25 +478,21 @@ const Home = () => {
           </div>
         </div>
         <div css={staticStyles.heroImage}>
-          <img 
-            src={logoUrl} 
+          <img
+            src={logoUrl}
             alt={companyName}
-            css={staticStyles.imageStyle}
+            css={[staticStyles.imageStyle, staticStyles.grayLogo]}
           />
         </div>
       </section>
 
-      {/* Company Intro Section */}
       <section css={staticStyles.introSection}>
         <div css={staticStyles.introContent}>
           <h2 css={dynamicStyles.sectionTitle}>معرفی {companyName}</h2>
-          <p css={staticStyles.introText}>
-            {companyDescription}
-          </p>
+          <p css={staticStyles.introText}>{companyDescription}</p>
         </div>
       </section>
 
-      {/* Categories Section with auto-scrolling */}
       <section css={staticStyles.categoriesSection}>
         <h2 css={dynamicStyles.sectionTitle}>دسته‌بندی محصولات</h2>
         <div css={staticStyles.categoriesContainer}>
@@ -519,38 +500,31 @@ const Home = () => {
             {categories.map((category, index) => (
               <div key={index} css={staticStyles.categoryCard}>
                 {category.image_url && (
-                  <img 
-                    src={category.image_url} 
-                    alt={category.name} 
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
                     css={staticStyles.categoryImage}
                   />
                 )}
                 <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
                 <p css={staticStyles.categoryDescription}>{category.description}</p>
-                <Link
-                  key={category.id}
-                  to={`/categories/${category.id}`}
-                >
+                <Link to={`/categories/${category.id}`}>
                   <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
                 </Link>
               </div>
             ))}
-            {/* Duplicate items for seamless looping */}
             {categories.map((category, index) => (
               <div key={`dup-${index}`} css={staticStyles.categoryCard} aria-hidden="true">
                 {category.image_url && (
-                  <img 
-                    src={category.image_url} 
-                    alt={category.name} 
+                  <img
+                    src={category.image_url}
+                    alt={category.name}
                     css={staticStyles.categoryImage}
                   />
                 )}
                 <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
                 <p css={staticStyles.categoryDescription}>{category.description}</p>
-                <Link
-                  key={category.id}
-                  to={`/categories/${category.id}`}
-                >
+                <Link to={`/categories/${category.id}`}>
                   <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
                 </Link>
               </div>
@@ -559,7 +533,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
       <section css={staticStyles.featuresSection}>
         <h2 css={dynamicStyles.sectionTitle}>چرا ما را انتخاب کنید؟</h2>
         <div css={staticStyles.featuresGrid}>
@@ -573,15 +546,14 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Standards Section */}
       <section css={staticStyles.standardsSection}>
         <h2 css={dynamicStyles.sectionTitle}>استانداردها</h2>
         <div css={staticStyles.standardsGrid}>
           {standards.map((standard, index) => (
             <div key={index} css={staticStyles.standardCard}>
-              <img 
-                src={standard.image} 
-                alt={standard.title} 
+              <img
+                src={standard.image}
+                alt={standard.title}
                 css={staticStyles.standardImage}
               />
               <h3 css={dynamicStyles.standardTitle}>{standard.title}</h3>
@@ -590,7 +562,6 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Instagram Section */}
       <section css={staticStyles.instagramSection}>
         <p css={staticStyles.instagramText}>
           <span css={staticStyles.instagramIcon}>📷</span>
@@ -606,7 +577,6 @@ const Home = () => {
         </a>
       </section>
 
-      {/* CTA Section with dynamic background */}
       <section css={dynamicStyles.ctaSection}>
         <h2 css={staticStyles.ctaTitle}>همکاری با {companyName}</h2>
         <p css={staticStyles.ctaText}>برای سفارش محصولات یا دریافت مشاوره با ما در تماس باشید</p>
@@ -614,6 +584,22 @@ const Home = () => {
           درخواست مشاوره
         </button>
       </section>
+
+      <footer css={staticStyles.footer}>
+        <a
+          referrerPolicy="origin"
+          target="_blank"
+          href="https://trustseal.enamad.ir/?id=596944&Code=Xgh9jXNIP8Bykb5ncY2s7pAMzUMyAPkd"
+        >
+          <img
+            referrerPolicy="origin"
+            src="https://trustseal.enamad.ir/logo.aspx?id=596944&Code=Xgh9jXNIP8Bykb5ncY2s7pAMzUMyAPkd"
+            alt="Trust Seal"
+            style={{ cursor: 'pointer' }}
+            code="Xgh9jXNIP8Bykb5ncY2s7pAMzUMyAPkd"
+          />
+        </a>
+      </footer>
 
       {isCategoryOpen && <CategoryPopup onClose={() => setIsCategoryOpen(false)} />}
     </div>

@@ -117,3 +117,35 @@ async def list_files_endpoint(
         ) for f in files
     ]
     return file_schemas.FileListResponse(files=file_responses)
+
+# Delete File Endpoint (Admin and file owner only)
+@router.delete("/{file_id}", response_model=file_schemas.FileResponse)
+async def delete_file_endpoint(
+    file_id: int,
+    current_user: user_schemas.User = Depends(auth.get_current_user),
+    db: Session = Depends(get_db)
+):
+    file = get_file(db, file_id)
+    
+    # Check permissions: only admin or file owner can delete
+    if current_user.role != RoleEnum.admin and current_user.id != file.user_id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this file"
+        )
+    
+    # Delete the file using CRUD function
+    deleted_file = delete_file(db, file_id)
+    
+    # Return the deleted file info
+    return file_schemas.FileResponse(
+        id=deleted_file.id,
+        filename=deleted_file.filename,
+        original_filename=deleted_file.original_filename,
+        content_type=deleted_file.content_type,
+        size=deleted_file.size,
+        public=deleted_file.public,
+        upload_date=deleted_file.upload_date,
+        user_id=deleted_file.user_id,
+        download_url=None  # Set to None since file is deleted
+    )

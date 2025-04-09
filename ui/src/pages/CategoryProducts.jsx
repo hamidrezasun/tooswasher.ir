@@ -6,6 +6,42 @@ import Navbar from '../components/Navbar';
 import { getCategoryById, getProducts, addToCart } from '../api/api';
 import { containerStyles } from './style';
 
+// Styles for the category image box
+const categoryImageBoxStyles = css`
+  width: 200px;
+  height: 200px;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  margin-bottom: 1rem;
+`;
+
+const categoryImageStyles = css`
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+`;
+
+// Styles for product images (matched with Products page)
+const productImageStyles = css`
+  max-width: 100%;
+  max-height: 150px;
+  width: auto;
+  height: auto;
+  object-fit: contain;    // Keeps the full image visible without cropping
+  border-radius: 8px;
+  margin-bottom: 1rem;
+  display: block;
+  margin-left: auto;      // Center the image horizontally
+  margin-right: auto;
+`;
+
 const CategoryProducts = () => {
   const { categoryId } = useParams();
   const [category, setCategory] = useState(null);
@@ -20,24 +56,21 @@ const CategoryProducts = () => {
         setLoading(true);
         const [catData, prodData] = await Promise.all([
           getCategoryById(categoryId),
-          getProducts()
+          getProducts(),
         ]);
         setCategory(catData);
 
-        // If the category has no parent ID, fetch its subcategories and their products
         if (!catData.parent_id) {
           const subcats = catData.subcategories || [];
           setSubcategories(subcats);
 
-          // Fetch products for each subcategory
           const subcatProducts = subcats.flatMap((sub) =>
-            prodData.filter((p) => p.category_id === sub.id),
+            prodData.filter((p) => p.category_id === sub.id)
           );
           const categoryProducts = prodData.filter((p) => p.category_id === parseInt(categoryId));
 
           setProducts([...subcatProducts, ...categoryProducts]);
         } else {
-          // If the category has a parent ID, show only its own products
           setProducts(prodData.filter((p) => p.category_id === parseInt(categoryId)));
         }
       } catch (err) {
@@ -88,18 +121,20 @@ const CategoryProducts = () => {
     <div css={containerStyles}>
       <Navbar />
       
-      {/* Category Header with Image */}
+      {/* Category Header with Image Box */}
       <div className="mb-8 text-center">
         {category.image_url && (
-          <div className="flex justify-center mb-4">
-            <img 
-              src={category.image_url} 
-              alt={category.name}
-              className="max-h-40 object-contain rounded-lg"
-              onError={(e) => {
-                e.target.style.display = 'none';
-              }}
-            />
+          <div className="flex justify-center">
+            <div css={categoryImageBoxStyles}>
+              <img
+                src={category.image_url}
+                alt={category.name}
+                css={categoryImageStyles}
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            </div>
           </div>
         )}
         <h1 className="text-3xl font-bold text-gray-800">{category.name}</h1>
@@ -122,7 +157,7 @@ const CategoryProducts = () => {
                 className="bg-indigo-100 text-indigo-700 p-2 rounded hover:bg-indigo-200 transition flex items-center"
               >
                 {sub.image_url && (
-                  <img 
+                  <img
                     src={sub.image_url}
                     alt={sub.name}
                     className="w-8 h-8 object-cover rounded-full mr-2"
@@ -152,7 +187,7 @@ const CategoryProducts = () => {
                 <img
                   src={product.image || 'https://via.placeholder.com/250x200'}
                   alt={product.name}
-                  className="w-full h-48 object-cover rounded"
+                  css={productImageStyles} // Apply the new styling
                   onError={(e) => {
                     e.target.src = 'https://via.placeholder.com/250x200';
                   }}

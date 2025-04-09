@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { uploadFile, downloadFile, listFiles, getUserProfile, getUserById } from '../api/api';
+import { uploadFile, downloadFile, listFiles, getUserProfile, getUserById, deleteFile } from '../api/api';
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
 import moment from 'jalali-moment'
@@ -95,6 +95,16 @@ const downloadButtonStyles = css`
   }
 `;
 
+const deleteButtonStyles = css`
+  padding: 0.25rem 0.75rem;
+  border-radius: 0.375rem;
+  background-color: #ef4444;
+  color: white;
+  &:hover {
+    background-color: #dc2626;
+  }
+`;
+
 const linkStyles = css`
   color: #2563eb;
   cursor: pointer;
@@ -173,6 +183,20 @@ const FileManager = () => {
       link.parentNode.removeChild(link);
     } catch (err) {
       setError(err.message || 'Error downloading file');
+    }
+  };
+
+  const handleDelete = async (fileId) => {
+    if (!window.confirm('آیا مطمئن هستید که می‌خواهید این فایل را حذف کنید؟')) {
+      return;
+    }
+
+    try {
+      await deleteFile(fileId);
+      setFiles(files.filter(file => file.id !== fileId));
+      setTotalFiles(totalFiles - 1);
+    } catch (err) {
+      setError(err.message || 'خطا در حذف فایل');
     }
   };
 
@@ -328,6 +352,14 @@ const FileManager = () => {
                       >
                         دانلود
                       </button>
+                      {(isAdmin || userMap[file.user_id]?.id === file.user_id) && (
+                        <button
+                          css={deleteButtonStyles}
+                          onClick={() => handleDelete(file.id)}
+                        >
+                          حذف
+                        </button>
+                      )}
                     </div>
                   </div>
                   <div className="mt-2">
