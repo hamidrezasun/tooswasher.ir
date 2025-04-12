@@ -2,16 +2,16 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import Navbar from '../../components/Navbar';
 import { 
   getCategories, 
   createCategory, 
   updateCategory, 
   deleteCategory,
   getUserProfile 
-} from '../api/api';
-import { isAuthenticated } from '../api/auth';
-import { containerStyles } from './style';
+} from '../../api/api';
+import { isAuthenticated } from '../../api/auth';
+import { containerStyles } from '../style';
 
 const searchBarStyles = css`
   width: 100%;

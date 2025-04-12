@@ -2,11 +2,11 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import ProductPopup from '../components/ProductPopup';
-import { getProducts, searchProducts, createProduct, updateProduct, deleteProduct, getUserProfile } from '../api/api';
-import { isAuthenticated } from '../api/auth';
-import { containerStyles } from './style';
+import Navbar from '../../components/Navbar';
+import ProductPopup from '../../components/ProductPopup';
+import { getProducts, searchProducts, createProduct, updateProduct, deleteProduct, getUserProfile } from '../../api/api';
+import { isAuthenticated } from '../../api/auth';
+import { containerStyles } from '../style';
 
 const searchBarStyles = css`
   width: 100%;

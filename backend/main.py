@@ -22,7 +22,7 @@ app = FastAPI(
     version="0.1",
     root_path="/api",  # For reverse proxy
     openapi_url="/openapi.json",  # Explicit OpenAPI schema path
-    docs_url="/docs",  # Explicit Swagger UI path
+    docs_url="/",  # Explicit Swagger UI path
     license_info={
         "name": "Apache 2.0",
         "url": "https://www.apache.org/licenses/LICENSE-2.0.html",

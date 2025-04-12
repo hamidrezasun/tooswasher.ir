@@ -92,6 +92,11 @@ const SideNavbar = ({ onClose }) => {
               مدیریت تنظیمات
             </Link>
           </li>
+          <li>
+            <Link to="/admin/order" onClick={onClose} className="text-indigo-600 hover:underline">
+              مدیریت سفارش‌ها
+            </Link>
+          </li>
         </ul>
       </div>
     </div>

@@ -4,17 +4,20 @@ import Home from './pages/Home';
 import Products from './pages/Products';
 import Product from './pages/Product';
 import CategoryProducts from './pages/CategoryProducts';
-import AdminDiscounts from './pages/AdminDiscounts';
-import AdminProducts from './pages/AdminProducts';
-import AdminCategories from './pages/AdminCategory';
+import AdminDiscounts from './pages/admin/AdminDiscounts';
+import AdminProducts from './pages/admin/AdminProducts';
+import AdminCategories from './pages/admin/AdminCategory';
 import Events from './pages/Events';
 import EventDetails from './pages/EventDetails';
 import Pages from './pages/Pages';
-import AdminUsers from './pages/AdminUsers';
-import AdminPages from './pages/AdminPages';
-import AdminFile from './pages/AdminFile';
-import AdminOption from './pages/AdminOption';
-import { getOptionByName } from './api/api'; // Import getOptionByName
+import AdminUsers from './pages/admin/AdminUsers';
+import AdminPages from './pages/admin/AdminPages';
+import AdminFile from './pages/admin/AdminFile';
+import AdminOption from './pages/admin/AdminOption';
+import AdminOrder from './pages/admin/AdminOrder';
+import Order from './pages/Order';
+import UserOrders from './pages/UserOrders'; // Import the UserOrders component
+import { getOptionByName } from './api/api';
 
 function App() {
   const [title, setTitle] = useState("My Website"); // Default title
@@ -28,16 +31,11 @@ function App() {
           setTitle(`${companyNameOption.option_value} - ${titleOption.option_value}`);
           document.title = `${companyNameOption.option_value} - ${titleOption.option_value}`;
         } else if (titleOption) {
-           setTitle(titleOption.option_value);
+          setTitle(titleOption.option_value);
           document.title = titleOption.option_value;
         }
-         //else { //removed hardcoded default.
-        //   document.title = "My Website";
-        // }
       } catch (error) {
         console.error("Failed to fetch title options:", error);
-        //  If fetch fails, keep default title
-        // document.title = "My Website";
       }
     };
 
@@ -58,9 +56,12 @@ function App() {
         <Route path="/admin/pages" element={<AdminPages />} />
         <Route path="/admin/file" element={<AdminFile />} />
         <Route path="/admin/option" element={<AdminOption />} />
+        <Route path="/admin/order" element={<AdminOrder />} />
         <Route path="/events" element={<Events />} />
         <Route path="/events/:eventId" element={<EventDetails />} />
         <Route path="/pages/:pageName" element={<Pages />} />
+        <Route path="/order" element={<Order />} />
+        <Route path="/orders" element={<UserOrders />} /> {/* New route for UserOrders */}
         <Route path="*" element={<div className="text-center mt-20">صفحه یافت نشد (404)</div>} />
       </Routes>
     </Router>

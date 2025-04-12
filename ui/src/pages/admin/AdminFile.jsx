@@ -2,10 +2,10 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import { uploadFile, downloadFile, listFiles, getUserProfile, getUserById, deleteFile } from '../api/api';
-import { isAuthenticated } from '../api/auth';
-import { containerStyles } from './style';
+import Navbar from '../../components/Navbar';
+import { uploadFile, downloadFile, listFiles, getUserProfile, getUserById, deleteFile } from '../../api/api';
+import { isAuthenticated } from '../../api/auth';
+import { containerStyles } from '../style';
 import moment from 'jalali-moment'
 
 const searchBarStyles = css`

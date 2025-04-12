@@ -2,7 +2,7 @@
 import { css } from '@emotion/react';
 import { useState, useEffect, useRef } from 'react';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
+import Navbar from '../../components/Navbar';
 import grapesjs from 'grapesjs';
 import 'grapesjs/dist/css/grapes.min.css';
 import gjsPresetWebpage from 'grapesjs-preset-webpage';
@@ -16,9 +16,9 @@ import {
   getUserProfile,
   searchPages,
   getPageById
-} from '../api/api';
-import { isAuthenticated } from '../api/auth';
-import { containerStyles } from './style';
+} from '../../api/api';
+import { isAuthenticated } from '../../api/auth';
+import { containerStyles } from '../style';
 
 // CSS Styles
 const searchBarStyles = css`

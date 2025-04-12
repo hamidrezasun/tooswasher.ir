@@ -33,12 +33,3 @@ class Order(Base):
         secondary=order_product,
         backref="orders"
     )
-
-    @property
-    def discounts(self):
-        discounts = set()
-        for product in self.products:
-            discount_id = order_product.c.discount_id.__get__(product)
-            if discount_id:
-                discounts.add(discount_id)
-        return discounts

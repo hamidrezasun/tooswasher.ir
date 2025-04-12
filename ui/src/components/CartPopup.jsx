@@ -1,6 +1,7 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom'; // Added for navigation
 import { getCart, updateCart, deleteFromCart, getDiscountByCode, getProductById } from '../api/api';
 import { popupStyles, popupContentStyles } from './NavbarStyles';
 
@@ -77,6 +78,7 @@ const CartPopup = ({ onClose }) => {
   const [discountCode, setDiscountCode] = useState('');
   const [appliedDiscount, setAppliedDiscount] = useState(null);
   const [discountError, setDiscountError] = useState('');
+  const navigate = useNavigate(); // Hook for navigation
 
   useEffect(() => {
     const fetchCartData = async () => {
@@ -106,7 +108,7 @@ const CartPopup = ({ onClose }) => {
 
   const handleQuantityChange = async (cartId, newQuantity, product) => {
     if (newQuantity < (product?.minimum_order || 1) || (product?.rate && newQuantity % product.rate !== 0)) {
-        return;
+      return;
     }
 
     try {
@@ -167,6 +169,11 @@ const CartPopup = ({ onClose }) => {
     setAppliedDiscount(null);
     setDiscountCode('');
     setDiscountError('');
+  };
+
+  const handleProceedToOrder = () => {
+    navigate('/order'); // Navigate to /order
+    onClose(); // Close the popup
   };
 
   const calculatePrice = (product) => {
@@ -357,12 +364,20 @@ const CartPopup = ({ onClose }) => {
               </div>
             </div>
 
-            <button
-              onClick={onClose}
-              className="mt-4 w-full bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
-            >
-              بستن
-            </button>
+            <div className="mt-4 flex gap-2">
+              <button
+                onClick={onClose}
+                className="flex-1 bg-gray-500 text-white p-2 rounded hover:bg-gray-600 transition"
+              >
+                بستن
+              </button>
+              <button
+                onClick={handleProceedToOrder}
+                className="flex-1 bg-green-500 text-white p-2 rounded hover:bg-green-600 transition"
+              >
+                ادامه به سفارش
+              </button>
+            </div>
           </>
         )}
       </div>

@@ -1,10 +1,10 @@
-# crud/product.py
 from sqlalchemy.orm import Session, joinedload
 from models.product import Product
 from models.category import Category
-from models.discount import Discount
+from models.discount import Discount, DiscountStatus
 import schemas.product as product_schemas
 from fastapi import HTTPException
+from crud.discount import get_applicable_discount  # New import
 
 def create_product(db: Session, product: product_schemas.ProductCreate, owner_id: int):
     if not db.query(Category).filter(Category.id == product.category_id).first():
@@ -16,80 +16,27 @@ def create_product(db: Session, product: product_schemas.ProductCreate, owner_id
     db_product = db.query(Product).options(joinedload(Product.category)).filter(Product.id == db_product.id).first()
     return db_product
 
-def _get_applicable_discount(db: Session, product: Product, user_id: int = None):
-    """
-    Helper function to find the most specific applicable discount for a product.
-    """
-    if user_id:
-        # 1. Check for user-specific discount for this product
-        discount = db.query(Discount).filter(
-            Discount.customer_id == user_id,
-            Discount.product_id == product.id
-        ).first()
-        if discount:
-            return discount
-        # 2. Check for user-specific general discount (no product_id)
-        discount = db.query(Discount).filter(
-            Discount.customer_id == user_id,
-            Discount.product_id.is_(None)
-        ).first()
-        if discount:
-            return discount
-
-    # 3. Check for product-specific discount
-    discount = db.query(Discount).filter(
-        Discount.product_id == product.id,
-        Discount.customer_id.is_(None)
-    ).first()
-    if discount:
-        return discount
-
-    # 4. Check for general discount (no product_id and no customer_id)
-    discount = db.query(Discount).filter(
-        Discount.product_id.is_(None),
-        Discount.customer_id.is_(None)
-    ).first()
-    return discount
-
 def get_product(db: Session, product_id: int, user_id: int = None):
     """
-    Retrieve a product by its ID, including the most specific applicable discount.
+    Retrieve a product by its ID, including the most specific applicable ACTIVE discount.
     """
     product = db.query(Product).options(joinedload(Product.category)).filter(Product.id == product_id).first()
     if not product:
         return None
 
-    applicable_discount = _get_applicable_discount(db, product, user_id)
-
-    if applicable_discount:
-        product.discount = {
-            "id": applicable_discount.id,
-            "code": applicable_discount.code,
-            "percent": applicable_discount.percent,
-            "max_discount": applicable_discount.max_discount
-        }
-    else:
-        product.discount = None
+    applicable_discount = get_applicable_discount(db, product.id, user_id)
+    product.discount = applicable_discount  # Already in correct dictionary format or None
 
     return product
 
 def get_products(db: Session, skip: int = 0, limit: int = 100, user_id: int = None):
     """
-    Retrieve a list of products, including the most specific applicable discount.
+    Retrieve a list of products, including the most specific applicable ACTIVE discount.
     """
     products = db.query(Product).options(joinedload(Product.category)).offset(skip).limit(limit).all()
 
     for product in products:
-        applicable_discount = _get_applicable_discount(db, product, user_id)
-        if applicable_discount:
-            product.discount = {
-                "id": applicable_discount.id,
-                "code": applicable_discount.code,
-                "percent": applicable_discount.percent,
-                "max_discount": applicable_discount.max_discount
-            }
-        else:
-            product.discount = None
+        product.discount = get_applicable_discount(db, product.id, user_id)  # Already in correct format
 
     return products
 
@@ -123,20 +70,12 @@ def delete_product(db: Session, product_id: int):
     return db_product
 
 def search_products_by_name(db: Session, query: str, skip: int = 0, limit: int = 100, user_id: int = None):
-    """Search products by name, including the most specific applicable discount."""
+    """Search products by name, including the most specific applicable ACTIVE discount."""
     products = db.query(Product).filter(
         Product.name.ilike(f"%{query}%")  # Case-insensitive search
     ).options(joinedload(Product.category)).offset(skip).limit(limit).all()
 
     for product in products:
-        applicable_discount = _get_applicable_discount(db, product, user_id)
-        if applicable_discount:
-            product.discount = {
-                "id": applicable_discount.id,
-                "code": applicable_discount.code,
-                "percent": applicable_discount.percent,
-                "max_discount": applicable_discount.max_discount
-            }
-        else:
-            product.discount = None
+        product.discount = get_applicable_discount(db, product.id, user_id)  # Already in correct format
+
     return products

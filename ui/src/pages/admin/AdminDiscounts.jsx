@@ -2,10 +2,10 @@
 import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import { getDiscounts, createDiscount, updateDiscount, deleteDiscount, getUserProfile, searchUsersByName, searchProducts, getProductById, getUserById } from '../api/api';
-import { isAuthenticated } from '../api/auth';
-import { containerStyles } from './style';
+import Navbar from '../../components/Navbar';
+import { getDiscounts, createDiscount, updateDiscount, deleteDiscount, getUserProfile, searchUsersByName, searchProducts, getProductById, getUserById } from '../../api/api';
+import { isAuthenticated } from '../../api/auth';
+import { containerStyles } from '../style';
 
 const AdminDiscounts = () => {
   const [discounts, setDiscounts] = useState([]);
@@ -16,7 +16,9 @@ const AdminDiscounts = () => {
     product_id: null,
     product_name: '',
     customer_id: null,
-    customer_name: ''
+    customer_name: '',
+    status: 'active',
+    submitted_by_user_id: null
   });
   const [editingDiscount, setEditingDiscount] = useState(null);
   const [error, setError] = useState(null);
@@ -27,6 +29,7 @@ const AdminDiscounts = () => {
   const [productSearchResults, setProductSearchResults] = useState([]);
   const [showUserSearch, setShowUserSearch] = useState(false);
   const [showProductSearch, setShowProductSearch] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -34,6 +37,11 @@ const AdminDiscounts = () => {
         if (isAuthenticated()) {
           const user = await getUserProfile();
           setIsAdmin(user.role === 'admin');
+          setCurrentUser(user);
+          setNewDiscount(prev => ({
+            ...prev,
+            submitted_by_user_id: user.id
+          }));
         }
         const data = await getDiscounts();
         setDiscounts(data || []);
@@ -52,7 +60,6 @@ const AdminDiscounts = () => {
     }
     try {
       const results = await searchUsersByName(query);
-      console.log('User search results:', results);
       setUserSearchResults(results || []);
       setShowUserSearch(true);
     } catch (err) {
@@ -68,7 +75,6 @@ const AdminDiscounts = () => {
     }
     try {
       const results = await searchProducts(query);
-      console.log('Product search results:', results);
       setProductSearchResults(results || []);
       setShowProductSearch(true);
     } catch (err) {
@@ -83,13 +89,14 @@ const AdminDiscounts = () => {
     }
     try {
       const payload = {
-        code: newDiscount.code || null, // Optional, send null if empty
+        code: newDiscount.code || null,
         percent: parseFloat(newDiscount.percent),
         max_discount: parseFloat(newDiscount.max_discount) || 0,
         product_id: newDiscount.product_id || null,
-        customer_id: newDiscount.customer_id || null
+        customer_id: newDiscount.customer_id || null,
+        status: newDiscount.status,
+        submitted_by_user_id: currentUser.id
       };
-      console.log('Sending payload to createDiscount:', payload);
       const discount = await createDiscount(payload);
       setDiscounts([...discounts, discount]);
       setNewDiscount({
@@ -99,11 +106,12 @@ const AdminDiscounts = () => {
         product_id: null,
         product_name: '',
         customer_id: null,
-        customer_name: ''
+        customer_name: '',
+        status: 'active',
+        submitted_by_user_id: currentUser.id
       });
       setError(null);
     } catch (err) {
-      console.error('Error response from createDiscount:', err.response || err);
       setError(err.response?.data?.detail || err.message || 'خطا در افزودن تخفیف');
     }
   };
@@ -115,19 +123,18 @@ const AdminDiscounts = () => {
     }
     try {
       const payload = {
-        code: editingDiscount.code || null, // Optional, send null if empty
+        code: editingDiscount.code || null,
         percent: parseFloat(editingDiscount.percent),
         max_discount: parseFloat(editingDiscount.max_discount) || 0,
         product_id: editingDiscount.product_id || null,
-        customer_id: editingDiscount.customer_id || null
+        customer_id: editingDiscount.customer_id || null,
+        status: editingDiscount.status
       };
-      console.log('Sending payload to updateDiscount:', payload);
       const updated = await updateDiscount(editingDiscount.id, payload);
       setDiscounts(discounts.map((d) => (d.id === updated.id ? updated : d)));
       setEditingDiscount(null);
       setError(null);
     } catch (err) {
-      console.error('Error response from updateDiscount:', err.response || err);
       setError(err.response?.data?.detail || err.message || 'خطا در ویرایش تخفیف');
     }
   };
@@ -145,7 +152,6 @@ const AdminDiscounts = () => {
 
   const selectUser = (user) => {
     const fullName = `${user.name || ''} ${user.last_name || ''}`.trim();
-    console.log('Selected user:', user);
     if (editingDiscount) {
       setEditingDiscount({
         ...editingDiscount,
@@ -165,28 +171,19 @@ const AdminDiscounts = () => {
   };
 
   const selectProduct = (product) => {
-    console.log('Selected product:', product);
     const productId = product.id;
     const productName = product.name;
     if (editingDiscount) {
-      setEditingDiscount(prev => {
-        const updated = {
-          ...prev,
-          product_id: productId,
-          product_name: productName
-        };
-        console.log('Updated editingDiscount:', updated);
-        return updated;
+      setEditingDiscount({
+        ...editingDiscount,
+        product_id: productId,
+        product_name: productName
       });
     } else {
-      setNewDiscount(prev => {
-        const updated = {
-          ...prev,
-          product_id: productId,
-          product_name: productName
-        };
-        console.log('Updated newDiscount:', updated);
-        return updated;
+      setNewDiscount({
+        ...newDiscount,
+        product_id: productId,
+        product_name: productName
       });
     }
     setShowProductSearch(false);
@@ -214,15 +211,15 @@ const AdminDiscounts = () => {
     try {
       let customerName = '';
       let productName = '';
+      
       if (discount.customer_id) {
-        const user = await getUserById(discount.customer_id);
-        customerName = `${user.name || ''} ${user.last_name || ''}`.trim();
+        customerName = await fetchUserName(discount.customer_id);
       }
       if (discount.product_id) {
         const product = await getProductById(discount.product_id);
-        console.log('Fetched product for edit:', product);
         productName = product.name || '';
       }
+      
       setEditingDiscount({
         ...discount,
         customer_name: customerName,
@@ -233,6 +230,49 @@ const AdminDiscounts = () => {
     }
   };
 
+  const fetchUserName = async (userId) => {
+    try {
+      const user = await getUserById(userId);
+      return `${user?.name || ''} ${user?.last_name || ''}`.trim() || `کاربر #${userId}`;
+    } catch {
+      return `کاربر #${userId}`;
+    }
+  };
+
+  const statusOptions = [
+    { value: 'active', label: 'فعال' },
+    { value: 'expired', label: 'منقضی' },
+    { value: 'used', label: 'استفاده شده' },
+    { value: 'disabled', label: 'غیرفعال' }
+  ];
+
+  const FetchName = ({ id, type }) => {
+    const [name, setName] = useState('');
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+      const fetchData = async () => {
+        try {
+          if (type === 'product') {
+            const product = await getProductById(id);
+            setName(product?.name || `محصول #${id}`);
+          } else {
+            const userName = await fetchUserName(id);
+            setName(userName);
+          }
+        } catch {
+          setName(type === 'product' ? `محصول #${id}` : `کاربر #${id}`);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+    }, [id, type]);
+
+    if (loading) return 'در حال بارگذاری...';
+    return name;
+  };
+
   if (isAdmin === false) return <Navigate to="/products" />;
   if (error) return <div className="text-center text-red-500 mt-20">{error}</div>;
 
@@ -241,6 +281,7 @@ const AdminDiscounts = () => {
       <Navbar />
       <div className="max-w-6xl mx-auto">
         <h1 className="text-3xl font-bold mb-8 text-center text-gray-800">مدیریت تخفیف‌ها</h1>
+        
         <div className="bg-white p-6 rounded-lg shadow-md mb-6">
           <h2 className="text-xl font-semibold mb-4">{editingDiscount ? 'ویرایش تخفیف' : 'افزودن تخفیف'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -278,6 +319,21 @@ const AdminDiscounts = () => {
               }
               className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+            <select
+              value={editingDiscount ? editingDiscount.status : newDiscount.status}
+              onChange={(e) =>
+                editingDiscount
+                  ? setEditingDiscount({ ...editingDiscount, status: e.target.value })
+                  : setNewDiscount({ ...newDiscount, status: e.target.value })
+              }
+              className="p-2 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              {statusOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
             <div className="relative">
               {(editingDiscount?.product_id || newDiscount.product_id) ? (
                 <div className="p-2 border rounded bg-gray-50 flex justify-between items-center">
@@ -309,7 +365,6 @@ const AdminDiscounts = () => {
                             className="p-2 hover:bg-gray-100 cursor-pointer"
                             onClick={(e) => {
                               e.preventDefault();
-                              console.log('Dropdown item clicked:', product);
                               selectProduct(product);
                             }}
                           >
@@ -385,6 +440,7 @@ const AdminDiscounts = () => {
             </button>
           )}
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full bg-white rounded-lg shadow-md">
             <thead>
@@ -392,8 +448,11 @@ const AdminDiscounts = () => {
                 <th className="p-3 text-right">کد</th>
                 <th className="p-3 text-right">درصد</th>
                 <th className="p-3 text-right">حداکثر تخفیف</th>
+                <th className="p-3 text-right">وضعیت</th>
+                <th className="p-3 text-right">تاریخ ایجاد</th>
                 <th className="p-3 text-right">محصول</th>
                 <th className="p-3 text-right">مشتری</th>
+                <th className="p-3 text-right">ایجاد کننده</th>
                 <th className="p-3 text-right">اقدامات</th>
               </tr>
             </thead>
@@ -404,10 +463,19 @@ const AdminDiscounts = () => {
                   <td className="p-3">{discount.percent}%</td>
                   <td className="p-3">{discount.max_discount ? discount.max_discount.toLocaleString() : 'N/A'} تومان</td>
                   <td className="p-3">
-                    {discount.product_id ? <FetchProductName productId={discount.product_id} /> : 'N/A'}
+                    {statusOptions.find(opt => opt.value === discount.status)?.label || discount.status}
                   </td>
                   <td className="p-3">
-                    {discount.customer_id ? <FetchCustomerName customerId={discount.customer_id} /> : 'عمومی'}
+                    {new Date(discount.submission_date).toLocaleDateString('fa-IR')}
+                  </td>
+                  <td className="p-3">
+                    {discount.product_id ? <FetchName id={discount.product_id} type="product" /> : 'N/A'}
+                  </td>
+                  <td className="p-3">
+                    {discount.customer_id ? <FetchName id={discount.customer_id} type="user" /> : 'عمومی'}
+                  </td>
+                  <td className="p-3">
+                    {discount.submitted_by_user_id ? <FetchName id={discount.submitted_by_user_id} type="user" /> : 'سیستم'}
                   </td>
                   <td className="p-3 flex space-x-2">
                     <button
@@ -431,50 +499,6 @@ const AdminDiscounts = () => {
       </div>
     </div>
   );
-};
-
-const FetchProductName = ({ productId }) => {
-  const [productName, setProductName] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const product = await getProductById(productId);
-        setProductName(product?.name || `محصول #${productId}`);
-      } catch {
-        setProductName(`محصول #${productId}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [productId]);
-
-  if (loading) return 'در حال بارگذاری...';
-  return productName;
-};
-
-const FetchCustomerName = ({ customerId }) => {
-  const [customerName, setCustomerName] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchCustomer = async () => {
-      try {
-        const user = await getUserById(customerId);
-        setCustomerName(`${user?.name || ''} ${user?.last_name || ''}`.trim() || `مشتری #${customerId}`);
-      } catch {
-        setCustomerName(`مشتری #${customerId}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCustomer();
-  }, [customerId]);
-
-  if (loading) return 'در حال بارگذاری...';
-  return customerName;
 };
 
 export default AdminDiscounts;
