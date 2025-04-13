@@ -132,7 +132,6 @@ def get_order(db: Session, order_id: int, user_id: int) -> Optional[Order]:
         HTTPException: If the order is not found or does not belong to the user
     """
     user = db.query(User).filter(User.id == user_id).first()
-    print(user.role)
     if user.role == RoleEnum.admin:
         query = db.query(Order).filter(Order.id == order_id)
     else:
