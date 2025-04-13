@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.gzip import GZipMiddleware
 import uvicorn
 from routes.user import router as user_router
 from routes.product import router as product_router
@@ -35,7 +36,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
+app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(user_router)
 app.include_router(product_router)
 app.include_router(cart_router)

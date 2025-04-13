@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import Navbar from '../../components/Navbar';
-import { getOrders, updateOrder, deleteOrder, getUserProfile, searchUsersByName, searchProducts, getProductById, getUserById, getOrder } from '../../api/api';
+import { getOrdersAdmin, updateOrder, deleteOrder, getUserProfile, searchUsersByName, searchProducts, getProductById, getUserById, getOrder } from '../../api/api';
 import { isAuthenticated } from '../../api/auth';
 import { containerStyles } from '../style';
 
@@ -95,7 +95,7 @@ const AdminOrders = () => {
           setIsAdmin(user.role === 'admin');
           setCurrentUser(user);
         }
-        const data = await getOrders(); // Uses /orders/admin/all for admins
+        const data = await getOrdersAdmin();
         setOrders(data || []);
 
         // Fetch product details for all items

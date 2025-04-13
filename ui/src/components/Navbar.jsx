@@ -39,6 +39,33 @@ const clickableUserInfoStyles = css`
   }
 `;
 
+const ordersButtonStyles = css`
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: white;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  white-space: nowrap;
+  min-width: 100px;
+  background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+  &:hover {
+    background: linear-gradient(135deg, #6d28d9 0%, #8b5cf6 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  }
+  @media (max-width: 640px) {
+    padding: 0.4rem 0.8rem;
+    font-size: 0.75rem;
+    min-width: 80px;
+  }
+`;
+
 const Navbar = () => {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
@@ -89,6 +116,7 @@ const Navbar = () => {
       setTimeout(() => setShowLoginMessage(false), 3000);
     }
   };
+
   useEffect(() => {
     if (logoUrl) {
       const favicon = document.getElementById('favicon');
@@ -96,7 +124,6 @@ const Navbar = () => {
         favicon.href = logoUrl;
       }
       
-      // Also create a fallback for Apple touch icons
       const appleTouchIcon = document.querySelector("link[rel='apple-touch-icon']");
       if (appleTouchIcon) {
         appleTouchIcon.href = logoUrl;
@@ -223,20 +250,17 @@ const Navbar = () => {
             )}
             {companyName}
           </Link>
-          <input
-            type="text"
-            placeholder="جستجو..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            css={searchStyles}
-          />
+          
           <div css={authCartStyles}>
-            <button css={searchButtonStyles} onClick={() => setIsSearchOpen(true)}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              جستجو
-            </button>
+            {user && (
+              <Link to="/orders" css={ordersButtonStyles}>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                سفارش‌ها
+              </Link>
+            )}
+            
             {user ? (
               <span 
                 css={clickableUserInfoStyles} 

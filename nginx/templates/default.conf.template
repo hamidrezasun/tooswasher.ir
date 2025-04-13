@@ -4,7 +4,16 @@ server {
     server_tokens off;
     root /usr/share/nginx/html;
     index index.html;
-    client_max_body_size 100m;  # Adjust this value based on your needs
+    client_max_body_size 100m;
+
+    # Enable gzip compression
+    gzip on;
+    gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
+    gzip_min_length 256;
+    gzip_vary on;
+    gzip_proxied any;
+    gzip_comp_level 6;
+
     # Serve React app at /
     location / {
         try_files $uri /index.html;
@@ -28,7 +37,7 @@ server {
     error_page 404 /custom_404.html;
     error_page 500 502 503 504 /custom_50x.html;
 
-    # Define custom error page locations (ensure these files exist)
+    # Define custom error page locations
     location = /custom_404.html {
         root /usr/share/nginx/html;
         internal;

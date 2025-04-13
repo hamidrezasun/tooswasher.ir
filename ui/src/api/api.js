@@ -107,6 +107,7 @@ export const searchPages = async (query, skip = 0, limit = 100) =>
 // --- Order Endpoints ---
 export const createOrder = async (data) => (await api.post('/orders/', data)).data;
 export const getOrders = async (skip = 0, limit = 100) => (await api.get('/orders/', { params: { skip, limit } })).data;
+export const getOrdersAdmin = async (skip = 0, limit = 100) => (await api.get('/orders/all', { params: { skip, limit } })).data;
 export const getOrder = async (id) => (await api.get(`/orders/${id}`)).data;
 export const updateOrder = async (id, data) => (await api.put(`/orders/${id}`, data)).data;
 export const deleteOrder = async (id) => await api.delete(`/orders/${id}`);

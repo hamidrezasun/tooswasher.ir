@@ -47,7 +47,9 @@ services:
       - 178.22.122.100
 
   nginx:
-    image: docker.arvancloud.ir/nginx:alpine
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     container_name: nginx_proxy
     environment:
       - DOMAIN=${DOMAIN}
@@ -66,7 +68,6 @@ services:
     dns:
       - 185.51.200.2
       - 178.22.122.100
-
   certbot:
     image: docker.arvancloud.ir/certbot/certbot
     container_name: certbot

@@ -86,7 +86,10 @@ def get_orders(
     Returns:
         List[Order]: List of orders belonging to the user
     """
-    query = db.query(Order).filter(Order.user_id == user_id)
+    if user_id == None :
+        query = db.query(Order)
+    else:
+        query = db.query(Order).filter(Order.user_id == user_id)
     
     if status:
         query = query.filter(Order.status == status)

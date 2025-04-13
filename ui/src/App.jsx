@@ -16,7 +16,7 @@ import AdminFile from './pages/admin/AdminFile';
 import AdminOption from './pages/admin/AdminOption';
 import AdminOrder from './pages/admin/AdminOrder';
 import Order from './pages/Order';
-import UserOrders from './pages/UserOrders'; // Import the UserOrders component
+import UserOrders from './pages/UserOrders'; 
 import { getOptionByName } from './api/api';
 
 function App() {
@@ -61,7 +61,7 @@ function App() {
         <Route path="/events/:eventId" element={<EventDetails />} />
         <Route path="/pages/:pageName" element={<Pages />} />
         <Route path="/order" element={<Order />} />
-        <Route path="/orders" element={<UserOrders />} /> {/* New route for UserOrders */}
+        <Route path="/orders" element={<UserOrders />} /> 
         <Route path="*" element={<div className="text-center mt-20">صفحه یافت نشد (404)</div>} />
       </Routes>
     </Router>

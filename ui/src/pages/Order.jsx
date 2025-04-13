@@ -3,7 +3,7 @@ import { css } from '@emotion/react';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
-import { getCart, createOrder, getUserProfile, getProductById, deleteFromCart } from '../api/api';
+import { getCart, createOrder, getUserProfile, getProductById, deleteFromCart, getDiscountByCode } from '../api/api';
 import { isAuthenticated } from '../api/auth';
 import { containerStyles } from './style';
 
@@ -113,6 +113,21 @@ const Order = () => {
   const handlePayment = async () => {
     try {
       setLoading(true);
+      setError(null);
+
+      // Validate required fields
+      const requiredFields = ['state', 'city', 'address', 'phone_number'];
+      const missingFields = requiredFields.filter(field => !userInfo[field]);
+      
+      if (missingFields.length > 0) {
+        setError(`لطفا این فیلدها را تکمیل کنید: ${missingFields.join(', ')}`);
+        return;
+      }
+
+      if (cartItems.length === 0) {
+        setError('سبد خرید شما خالی است');
+        return;
+      }
 
       // Prepare order items from cart
       const orderItems = cartItems.map(item => ({
@@ -120,13 +135,14 @@ const Order = () => {
         quantity: item.quantity
       }));
 
-      // Prepare order payload
+      // Prepare order payload with all required fields
       const orderPayload = {
         status: "Pending",
-        state: userInfo.state || '',
-        city: userInfo.city || '',
-        address: userInfo.address || '',
-        phone_number: userInfo.phone_number || '',
+        state: userInfo.state,
+        city: userInfo.city,
+        address: userInfo.address,
+        phone_number: userInfo.phone_number,
+        user_id: userInfo.id, // Required field
         items: orderItems
       };
 
@@ -141,9 +157,14 @@ const Order = () => {
       setCartItems([]);
 
       // Redirect to order confirmation page
-      navigate(`/orders/${order.id}`);
+      navigate(`/orders`);
     } catch (err) {
-      setError(err.response?.data?.detail || err.message || 'خطا در ایجاد سفارش');
+      console.error('Order creation error:', err.response?.data);
+      const errorMessage = err.response?.data?.detail || 
+                         err.response?.data?.message || 
+                         err.message || 
+                         'خطا در ایجاد سفارش';
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -182,23 +203,23 @@ const Order = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div>
               <p className="font-medium">نام و نام خانوادگی:</p>
-              <p>{userInfo.name} {userInfo.last_name}</p>
+              <p>{userInfo?.name} {userInfo?.last_name}</p>
             </div>
             <div>
               <p className="font-medium">شماره تماس:</p>
-              <p>{userInfo.phone_number || 'ثبت نشده'}</p>
+              <p>{userInfo?.phone_number || 'ثبت نشده'}</p>
             </div>
             <div>
               <p className="font-medium">استان:</p>
-              <p>{userInfo.state || 'ثبت نشده'}</p>
+              <p>{userInfo?.state || 'ثبت نشده'}</p>
             </div>
             <div>
               <p className="font-medium">شهر:</p>
-              <p>{userInfo.city || 'ثبت نشده'}</p>
+              <p>{userInfo?.city || 'ثبت نشده'}</p>
             </div>
             <div className="md:col-span-2">
               <p className="font-medium">آدرس کامل:</p>
-              <p>{userInfo.address || 'ثبت نشده'}</p>
+              <p>{userInfo?.address || 'ثبت نشده'}</p>
             </div>
           </div>
 
@@ -297,7 +318,7 @@ const Order = () => {
             {discountAmount > 0 && (
               <div css={infoRowStyles} className="text-green-600">
                 <span>تخفیف:</span>
-                <span>-{discountAmount.toLocaleString()} تومان</span>
+              <span>-{discountAmount.toLocaleString()} تومان</span>
               </div>
             )}
             <div css={infoRowStyles} className="font-bold border-t-2 border-gray-200 pt-2">
