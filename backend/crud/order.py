@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import select, func
 from models.order import Order, order_product
 from models.product import Product
-from models.user import User
+from models.user import User, RoleEnum
 from models.discount import Discount, DiscountStatus
 import schemas.order as order_schemas
 from fastapi import HTTPException, status
@@ -131,7 +131,12 @@ def get_order(db: Session, order_id: int, user_id: int) -> Optional[Order]:
     Raises:
         HTTPException: If the order is not found or does not belong to the user
     """
-    query = db.query(Order).filter(Order.id == order_id, Order.user_id == user_id)
+    user = db.query(User).filter(User.id == user_id).first()
+    print(user.role)
+    if user.role == RoleEnum.admin:
+        query = db.query(Order).filter(Order.id == order_id)
+    else:
+        query = db.query(Order).filter(Order.id == order_id, Order.user_id == user_id)
     order = query.first()
     
     if not order:
