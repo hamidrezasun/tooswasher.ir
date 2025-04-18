@@ -12,6 +12,7 @@ from routes.payment import router as payment_router
 from routes.event import router as event_router
 from routes.files import router as file_router
 from routes.option import router as option_router
+from routes.workflow import router as workflow_router
 from fastapi.middleware.cors import CORSMiddleware
 import logging
 from database import Base,engine
@@ -48,6 +49,7 @@ app.include_router(payment_router)
 app.include_router(event_router)
 app.include_router(file_router)
 app.include_router(option_router)
+app.include_router(workflow_router)
 
 Base.metadata.create_all(bind=engine)
 

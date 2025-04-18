@@ -1,10 +1,41 @@
 /** @jsxImportSource @emotion/react */
 import { css } from '@emotion/react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Link } from 'react-router-dom';
-import Navbar from '../components/Navbar';
-import CategoryPopup from '../components/CategoryPopup';
-import { getOptionByName, getCategories } from '../api/api';
+
+// Lazy load heavy components
+const Navbar = lazy(() => import('../components/Navbar'));
+const CategoryPopup = lazy(() => import('../components/CategoryPopup'));
+
+// Utility functions
+const adjustColor = (color, amount) => {
+  if (!color) return '#ffffff';
+  
+  let R = parseInt(color.substring(1, 3), 16);
+  let G = parseInt(color.substring(3, 5), 16);
+  let B = parseInt(color.substring(5, 7), 16);
+
+  R = Math.max(0, Math.min(255, R + amount));
+  G = Math.max(0, Math.min(255, G + amount));
+  B = Math.max(0, Math.min(255, B + amount));
+
+  const toHex = num => num.toString(16).padStart(2, '0');
+  return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
+};
+
+// Static data
+const FEATURES = [
+  { icon: '⚙️', title: 'کیفیت ممتاز', description: 'استفاده از بهترین مواد اولیه' },
+  { icon: '⏱️', title: 'تحویل به‌موقع', description: 'ارسال سریع به سراسر کشور' },
+  { icon: '🤝', title: 'پشتیبانی حرفه‌ای', description: 'مشاوره و خدمات پس از فروش' },
+];
+
+const STANDARDS = [
+  { image: '/images/iso-9001.png', title: 'ISO 9001' },
+  { image: '/images/iso-14001.png', title: 'ISO 14001' },
+  { image: '/images/ce-marking.png', title: 'CE Marking' },
+  { image: '/images/tuv-certified.png', title: 'TÜV Certified' },
+];
 
 const Home = () => {
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -14,50 +45,48 @@ const Home = () => {
   const [companyColorCode, setCompanyColorCode] = useState('#b91c1c');
   const [logoUrl, setLogoUrl] = useState('');
   const [categories, setCategories] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const companyNameOption = await getOptionByName('company_name');
-        const titleDescriptionOption = await getOptionByName('title_description');
-        const companyDescriptionOption = await getOptionByName('company_description');
-        const companyColorCodeOption = await getOptionByName('company_color_code');
-        const logoUrlOption = await getOptionByName('logo_url');
+        setIsLoading(true);
+        // Dynamically import API functions
+        const { getOptionByName, getCategories } = await import('../api/api');
+        
+        const [
+          companyNameOption,
+          titleDescriptionOption,
+          companyDescriptionOption,
+          companyColorCodeOption,
+          logoUrlOption,
+          categoriesData
+        ] = await Promise.all([
+          getOptionByName('company_name'),
+          getOptionByName('title_description'),
+          getOptionByName('company_description'),
+          getOptionByName('company_color_code'),
+          getOptionByName('logo_url'),
+          getCategories()
+        ]);
 
-        if (companyNameOption) setCompanyName(companyNameOption.option_value);
-        if (titleDescriptionOption) setTitleDescription(titleDescriptionOption.option_value);
-        if (companyDescriptionOption) setCompanyDescription(companyDescriptionOption.option_value);
-        if (companyColorCodeOption) setCompanyColorCode(companyColorCodeOption.option_value);
-        if (logoUrlOption) setLogoUrl(logoUrlOption.option_value);
-
-        const categoriesData = await getCategories();
-        const parentCategories = categoriesData.filter(category => !category.parent_id);
-        setCategories(parentCategories);
+        setCompanyName(companyNameOption?.option_value || '');
+        setTitleDescription(titleDescriptionOption?.option_value || '');
+        setCompanyDescription(companyDescriptionOption?.option_value || '');
+        setCompanyColorCode(companyColorCodeOption?.option_value || '#b91c1c');
+        setLogoUrl(logoUrlOption?.option_value || '');
+        setCategories(categoriesData.filter(category => !category.parent_id));
       } catch (error) {
         console.error('Failed to fetch data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
+    
     fetchData();
   }, []);
 
-  const adjustColor = (color, amount) => {
-    if (!color) return '#ffffff';
-    let R = parseInt(color.substring(1, 3), 16);
-    let G = parseInt(color.substring(3, 5), 16);
-    let B = parseInt(color.substring(5, 7), 16);
-
-    R = Math.max(0, Math.min(255, R + amount));
-    G = Math.max(0, Math.min(255, G + amount));
-    B = Math.max(0, Math.min(255, B + amount));
-
-    const toHex = num => {
-      const hex = num.toString(16);
-      return hex.length === 1 ? `0${hex}` : hex;
-    };
-
-    return `#${toHex(R)}${toHex(G)}${toHex(B)}`;
-  };
-
+  // Dynamic styles based on company color
   const dynamicStyles = {
     hero: css`
       display: flex;
@@ -163,6 +192,7 @@ const Home = () => {
     `,
   };
 
+  // Static styles
   const staticStyles = {
     container: css`
       font-family: 'Vazir', sans-serif;
@@ -442,24 +472,28 @@ const Home = () => {
       text-align: center;
       background: #f9fafb;
     `,
+    loadingIndicator: css`
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      font-size: 1.5rem;
+    `,
   };
 
-  const features = [
-    { icon: '⚙️', title: 'کیفیت ممتاز', description: 'استفاده از بهترین مواد اولیه' },
-    { icon: '⏱️', title: 'تحویل به‌موقع', description: 'ارسال سریع به سراسر کشور' },
-    { icon: '🤝', title: 'پشتیبانی حرفه‌ای', description: 'مشاوره و خدمات پس از فروش' },
-  ];
-
-  const standards = [
-    { image: 'https://picsum.photos/200/300', title: 'ISO 9001' },
-    { image: 'https://picsum.photos/200/300', title: 'ISO 14001' },
-    { image: 'https://picsum.photos/200/300', title: 'CE Marking' },
-    { image: 'https://picsum.photos/200/300', title: 'TÜV Certified' },
-  ];
+  if (isLoading) {
+    return (
+      <div css={staticStyles.loadingIndicator}>
+        در حال بارگذاری...
+      </div>
+    );
+  }
 
   return (
     <div css={staticStyles.container}>
-      <Navbar />
+      <Suspense fallback={<div css={css`min-height: 80px;`} />}>
+        <Navbar />
+      </Suspense>
 
       <section css={dynamicStyles.hero}>
         <div css={staticStyles.heroContent}>
@@ -478,11 +512,14 @@ const Home = () => {
           </div>
         </div>
         <div css={staticStyles.heroImage}>
-          <img
-            src={logoUrl}
-            alt={companyName}
-            css={[staticStyles.imageStyle, staticStyles.grayLogo]}
-          />
+          {logoUrl && (
+            <img
+              src={logoUrl}
+              alt={companyName}
+              css={[staticStyles.imageStyle, staticStyles.grayLogo]}
+              loading="lazy"
+            />
+          )}
         </div>
       </section>
 
@@ -497,29 +534,14 @@ const Home = () => {
         <h2 css={dynamicStyles.sectionTitle}>دسته‌بندی محصولات</h2>
         <div css={staticStyles.categoriesContainer}>
           <div css={staticStyles.categoriesTrack}>
-            {categories.map((category, index) => (
-              <div key={index} css={staticStyles.categoryCard}>
+            {categories.map((category) => (
+              <div key={category.id} css={staticStyles.categoryCard}>
                 {category.image_url && (
                   <img
                     src={category.image_url}
                     alt={category.name}
                     css={staticStyles.categoryImage}
-                  />
-                )}
-                <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
-                <p css={staticStyles.categoryDescription}>{category.description}</p>
-                <Link to={`/categories/${category.id}`}>
-                  <button css={dynamicStyles.categoryButton}>مشاهده جزئیات</button>
-                </Link>
-              </div>
-            ))}
-            {categories.map((category, index) => (
-              <div key={`dup-${index}`} css={staticStyles.categoryCard} aria-hidden="true">
-                {category.image_url && (
-                  <img
-                    src={category.image_url}
-                    alt={category.name}
-                    css={staticStyles.categoryImage}
+                    loading="lazy"
                   />
                 )}
                 <h3 css={dynamicStyles.categoryTitle}>{category.name}</h3>
@@ -536,7 +558,7 @@ const Home = () => {
       <section css={staticStyles.featuresSection}>
         <h2 css={dynamicStyles.sectionTitle}>چرا ما را انتخاب کنید؟</h2>
         <div css={staticStyles.featuresGrid}>
-          {features.map((feature, index) => (
+          {FEATURES.map((feature, index) => (
             <div key={index} css={staticStyles.featureCard}>
               <div css={dynamicStyles.featureIcon}>{feature.icon}</div>
               <h3 css={dynamicStyles.featureTitle}>{feature.title}</h3>
@@ -549,12 +571,13 @@ const Home = () => {
       <section css={staticStyles.standardsSection}>
         <h2 css={dynamicStyles.sectionTitle}>استانداردها</h2>
         <div css={staticStyles.standardsGrid}>
-          {standards.map((standard, index) => (
+          {STANDARDS.map((standard, index) => (
             <div key={index} css={staticStyles.standardCard}>
               <img
                 src={standard.image}
                 alt={standard.title}
                 css={staticStyles.standardImage}
+                loading="lazy"
               />
               <h3 css={dynamicStyles.standardTitle}>{standard.title}</h3>
             </div>
@@ -595,13 +618,14 @@ const Home = () => {
             referrerPolicy="origin"
             src="https://trustseal.enamad.ir/logo.aspx?id=596944&Code=Xgh9jXNIP8Bykb5ncY2s7pAMzUMyAPkd"
             alt="Trust Seal"
-            style={{ cursor: 'pointer' }}
-            code="Xgh9jXNIP8Bykb5ncY2s7pAMzUMyAPkd"
+            css={css`cursor: pointer;`}
           />
         </a>
       </footer>
 
-      {isCategoryOpen && <CategoryPopup onClose={() => setIsCategoryOpen(false)} />}
+      <Suspense fallback={null}>
+        {isCategoryOpen && <CategoryPopup onClose={() => setIsCategoryOpen(false)} />}
+      </Suspense>
     </div>
   );
 };

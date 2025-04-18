@@ -5,7 +5,18 @@ import { registerUser } from '../api/api';
 import { popupStyles, popupContentStyles } from './NavbarStyles';
 
 const RegisterPopup = ({ onClose, setIsLoginOpen }) => {
-  const [formData, setFormData] = useState({ username: '', password: '', email: '', national_id: '' });
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    email: '',
+    name: '',
+    last_name: '',
+    national_id: '',
+    address: '',
+    state: '',
+    city: '',
+    phone_number: ''
+  });
   const [error, setError] = useState(null);
 
   const handleRegister = async (e) => {
@@ -34,6 +45,20 @@ const RegisterPopup = ({ onClose, setIsLoginOpen }) => {
             className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <input
+            type="text"
+            placeholder="نام"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            type="text"
+            placeholder="نام خانوادگی"
+            value={formData.last_name}
+            onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
             type="email"
             placeholder="ایمیل"
             value={formData.email}
@@ -52,6 +77,34 @@ const RegisterPopup = ({ onClose, setIsLoginOpen }) => {
             placeholder="کدملی"
             value={formData.national_id}
             onChange={(e) => setFormData({ ...formData, national_id: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            type="text"
+            placeholder="آدرس"
+            value={formData.address}
+            onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            type="text"
+            placeholder="استان"
+            value={formData.state}
+            onChange={(e) => setFormData({ ...formData, state: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            type="text"
+            placeholder="شهر"
+            value={formData.city}
+            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+            className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <input
+            type="text"
+            placeholder="شماره تلفن"
+            value={formData.phone_number}
+            onChange={(e) => setFormData({ ...formData, phone_number: e.target.value })}
             className="w-full p-2 mb-4 border rounded focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
           <button type="submit" className="w-full bg-indigo-500 text-white p-2 rounded hover:bg-indigo-600 transition">
