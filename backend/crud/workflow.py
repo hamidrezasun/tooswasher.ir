@@ -1,10 +1,13 @@
-# crud/workflow.py
 from sqlalchemy.orm import Session, joinedload
 from models.workflow import Workflow, WorkflowStep, WorkflowStepTemplate
 from models.user import User, RoleEnum
 import schemas.workflow as workflow_schemas
 from datetime import datetime
-
+from sqlalchemy.exc import IntegrityError
+from fastapi import HTTPException
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 def create_workflow(db: Session, workflow: workflow_schemas.WorkflowCreate, creator_id: int):
     """
     Create a standard workflow.
@@ -246,17 +249,65 @@ def create_workflow_step_template(db: Session, workflow_id: int, step_template: 
 def update_workflow_step_template(db: Session, step_template_id: int, step_template: workflow_schemas.WorkflowStepTemplateCreate):
     db_step_template = db.query(WorkflowStepTemplate).filter(WorkflowStepTemplate.id == step_template_id).first()
     if not db_step_template:
+        logger.warning(f"No WorkflowStepTemplate found with id {step_template_id}")
         return None
+
     update_data = step_template.dict(exclude_unset=True)
-    for key, value in update_data.items():
-        setattr(db_step_template, key, value)
-    db_step_template.updated_at = datetime.utcnow()
-    db.commit()
-    db.refresh(db_step_template)
-    return db_step_template
+    
+    # Validate next_step_on_success
+    if 'next_step_on_success' in update_data and update_data['next_step_on_success'] is not None:
+        next_step_id = update_data['next_step_on_success']
+        next_step = db.query(WorkflowStepTemplate).filter(WorkflowStepTemplate.id == next_step_id).first()
+        if not next_step:
+            logger.error(f"Invalid next_step_on_success: No WorkflowStepTemplate found with id {next_step_id}")
+            raise HTTPException(status_code=400, detail=f"Invalid next_step_on_success: No WorkflowStepTemplate found with id {next_step_id}")
+    
+    # Validate next_step_on_failure
+    if 'next_step_on_failure' in update_data and update_data['next_step_on_failure'] is not None:
+        next_step_id = update_data['next_step_on_failure']
+        next_step = db.query(WorkflowStepTemplate).filter(WorkflowStepTemplate.id == next_step_id).first()
+        if not next_step:
+            logger.error(f"Invalid next_step_on_failure: No WorkflowStepTemplate found with id {next_step_id}")
+            raise HTTPException(status_code=400, detail=f"Invalid next_step_on_failure: No WorkflowStepTemplate found with id {next_step_id}")
+
+    try:
+        for key, value in update_data.items():
+            setattr(db_step_template, key, value)
+        db_step_template.updated_at = datetime.utcnow()
+        db.commit()
+        db.refresh(db_step_template)
+        logger.info(f"Updated WorkflowStepTemplate id {step_template_id}")
+        return db_step_template
+    except IntegrityError as e:
+        db.rollback()
+        logger.error(f"IntegrityError updating WorkflowStepTemplate id {step_template_id}: {str(e)}")
+        raise HTTPException(status_code=400, detail=f"Database integrity error: {str(e)}")
 
 def delete_workflow_step_template(db: Session, step_template_id: int):
     db_step_template = db.query(WorkflowStepTemplate).filter(WorkflowStepTemplate.id == step_template_id).first()
     if db_step_template:
         db.delete(db_step_template)
         db.commit()
+
+def get_workflow_step_templates(db: Session, workflow_id: int, skip: int = 0, limit: int = 100):
+    """
+    Retrieve all workflow step templates for a given workflow.
+    """
+    return (
+        db.query(WorkflowStepTemplate)
+        .filter(WorkflowStepTemplate.workflow_id == workflow_id)
+        .offset(skip)
+        .limit(limit)
+        .all()
+    )
+
+def get_workflow_step_template(db: Session, step_template_id: int):
+    """
+    Retrieve a single workflow step template by its ID, including the associated workflow.
+    """
+    return (
+        db.query(WorkflowStepTemplate)
+        .options(joinedload(WorkflowStepTemplate.workflow))
+        .filter(WorkflowStepTemplate.id == step_template_id)
+        .first()
+    )

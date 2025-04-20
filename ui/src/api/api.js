@@ -1,16 +1,18 @@
+// api.js
 import axios from 'axios';
-import { getToken } from './auth';
+import { getAccessToken, getRefreshToken, saveTokens, logoutUser } from './auth';
 
-const API_URL = '/api'; // Adjust if needed
+const API_URL = '/api';
 
 const api = axios.create({
   baseURL: API_URL,
   headers: { 'Content-Type': 'application/json', 'accept': 'application/json' },
 });
 
+// Request interceptor
 api.interceptors.request.use(
   (config) => {
-    const token = getToken();
+    const token = getAccessToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -19,30 +21,97 @@ api.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
+// Response interceptor for token refresh
+api.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // If 401 and we haven't already retried
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      
+      try {
+        const refreshToken = getRefreshToken();
+        if (!refreshToken) {
+          logoutUser();
+          return Promise.reject(error);
+        }
+
+        // Attempt to refresh tokens
+        const response = await axios.post(`${API_URL}/users/refresh`, {
+          refresh_token: refreshToken
+        });
+        
+        const { access_token, refresh_token } = response.data;
+        
+        // Determine which storage to use based on where the original refresh token was
+        const rememberMe = !!localStorage.getItem('refresh_token');
+        saveTokens(access_token, refresh_token, rememberMe);
+        
+        // Update the Authorization header
+        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        
+        // Retry the original request
+        return api(originalRequest);
+      } catch (refreshError) {
+        logoutUser();
+        return Promise.reject(refreshError);
+      }
+    }
+    
+    return Promise.reject(error);
+  }
+);
+
 export const setAuthToken = (token) => {
-  if (token) api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-  else delete api.defaults.headers.common['Authorization'];
+  if (token) {
+    api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+  } else {
+    delete api.defaults.headers.common['Authorization'];
+  }
 };
 
-const token = getToken();
+// Initialize with existing token if available
+const token = getAccessToken();
 if (token) setAuthToken(token);
 
+
 // --- User Endpoints ---
-export const loginForAccessToken = async (formData) => {
+export const loginUser = async (username, password, rememberMe = false) => {
   try {
-    const response = await api.post('/users/token', formData, {
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    const response = await api.post('/users/token', {
+      username,
+      password,
+      remember_me: rememberMe
     });
-    const token = response.data.access_token;
-    localStorage.setItem('access_token', token);
-    setAuthToken(token);
+    
+    const { access_token, refresh_token } = response.data;
+    saveTokens(access_token, refresh_token, rememberMe);
+    setAuthToken(access_token);
     return response.data;
   } catch (err) {
     console.error('Login error:', err.response?.data || err.message);
     throw err;
   }
 };
-
+export const refreshTokens = async () => {
+  try {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      throw new Error('No refresh token available');
+    }
+    
+    const response = await api.post('/users/refresh', {
+      refresh_token: refreshToken
+    });
+    
+    return response.data;
+  } catch (err) {
+    console.error('Token refresh error:', err.response?.data || err.message);
+    throw err;
+  }
+};
 export const registerUser = async (userData) => (await api.post('/users/register', userData)).data;
 export const getUserProfile = async () => (await api.get('/users/me')).data;
 export const getAllUsers = async () => (await api.get('/users/all')).data;
@@ -188,9 +257,43 @@ export const deleteOption = async (optionId) => (await api.delete(`/options/${op
 export const getUsersByRole = async (role) =>
   (await api.get('/users/', { params: { role } })).data;
 
+// --- Workflow Endpoints ---
+export const getWorkflows = async (skip = 0, limit = 100) =>
+  (await api.get('/workflows/', { params: { skip, limit } })).data;
+export const getWorkflow = async (workflowId) => 
+  (await api.get(`/workflows/${workflowId}`)).data;
+export const createWorkflow = async (data) => 
+  (await api.post('/workflows/', data)).data;
+export const createWorkflowFromTemplate = async (data) => 
+  (await api.post('/workflows/from-template/', data)).data;
+export const updateWorkflow = async (workflowId, data) => 
+  (await api.put(`/workflows/${workflowId}`, data)).data;
+export const deleteWorkflow = async (workflowId) => 
+  await api.delete(`/workflows/${workflowId}`);
+export const createWorkflowStep = async (workflowId, data) =>
+  (await api.post(`/workflows/${workflowId}/steps/`, data)).data;
+export const getWorkflowSteps = async (workflowId, skip = 0, limit = 100) =>
+  (await api.get(`/workflows/${workflowId}/steps/`, { params: { skip, limit } })).data;
+export const getWorkflowStep = async (workflowId, stepId) =>
+  (await api.get(`/workflows/${workflowId}/steps/${stepId}`)).data;
+export const updateWorkflowStep = async (workflowId, stepId, data) =>
+  (await api.put(`/workflows/${workflowId}/steps/${stepId}`, data)).data;
+export const deleteWorkflowStep = async (workflowId, stepId) =>
+  await api.delete(`/workflows/${workflowId}/steps/${stepId}`);
+export const getTemplateSteps = async (workflowId, skip = 0, limit = 100) =>
+  (await api.get(`/workflows/${workflowId}/template-steps/`, { params: { skip, limit } })).data;
+export const getTemplateStep = async (workflowId, stepTemplateId) =>
+  (await api.get(`/workflows/${workflowId}/template-steps/${stepTemplateId}`)).data;
+export const createWorkflowStepTemplate = async (workflowId, data) =>
+  (await api.post(`/workflows/${workflowId}/template-steps/`, data)).data;
+export const updateWorkflowStepTemplate = async (workflowId, stepTemplateId, data) =>
+  (await api.put(`/workflows/${workflowId}/template-steps/${stepTemplateId}`, data)).data;
+export const deleteWorkflowStepTemplate = async (workflowId, stepTemplateId) =>
+  await api.delete(`/workflows/${workflowId}/template-steps/${stepTemplateId}`);
+
 export default {
   setAuthToken,
-  loginForAccessToken,
+  loginUser,
   registerUser,
   getUserProfile,
   getAllUsers,
@@ -266,4 +369,20 @@ export default {
   createOption,
   updateOption,
   deleteOption,
+  getWorkflows,
+  getWorkflow,
+  createWorkflow,
+  createWorkflowFromTemplate,
+  updateWorkflow,
+  deleteWorkflow,
+  createWorkflowStep,
+  getWorkflowSteps,
+  getWorkflowStep,
+  updateWorkflowStep,
+  deleteWorkflowStep,
+  getTemplateSteps,
+  getTemplateStep,
+  createWorkflowStepTemplate,
+  updateWorkflowStepTemplate,
+  deleteWorkflowStepTemplate,
 };

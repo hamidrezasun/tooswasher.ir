@@ -500,12 +500,11 @@ const Home = () => {
           <h1 css={staticStyles.heroTitle}>{companyName}</h1>
           <p css={staticStyles.heroSubtitle}>{titleDescription}</p>
           <div css={staticStyles.buttonGroup}>
-            <button
-              onClick={() => setIsCategoryOpen(true)}
-              css={dynamicStyles.primaryButton}
-            >
-              مشاهده محصولات
-            </button>
+            <Link to="/products" css={css`text-decoration: none;`}>
+              <button css={dynamicStyles.primaryButton}>
+                مشاهده محصولات
+              </button>
+            </Link>
             <button css={staticStyles.secondaryButton}>
               تماس با ما
             </button>

@@ -1,8 +1,7 @@
 /** @jsxImportSource @emotion/react */
-import { css } from '@emotion/react';
 import { useState } from 'react';
-import { loginForAccessToken, setAuthToken, requestPasswordReset } from '../api/api';
-import { saveToken } from '../api/auth';
+import { loginUser } from '../api/api';
+import { css } from '@emotion/react';
 
 const popupStyles = css`
   position: fixed;
@@ -62,23 +61,17 @@ const linkStyles = css`
 const LoginPopup = ({ onClose, setIsRegisterOpen, onLoginSuccess }) => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [email, setEmail] = useState(''); // Add state for email input
+  const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [isResetMode, setIsResetMode] = useState(false); // Toggle between login and reset modes
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const formData = new URLSearchParams();
-      formData.append('username', username);
-      formData.append('password', password);
-      formData.append('grant_type', 'password');
-      const data = await loginForAccessToken(formData);
-      saveToken(data.access_token);
-      setAuthToken(data.access_token);
-      console.log('Login response:', data);
-      if (data.access_token) {
+      const response = await loginUser(username, password, rememberMe);
+      if (response.access_token) {
         onLoginSuccess();
         onClose();
       } else {
@@ -141,6 +134,15 @@ const LoginPopup = ({ onClose, setIsRegisterOpen, onLoginSuccess }) => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            <div className="remember-me">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+              />
+              <label htmlFor="rememberMe">مرا به خاطر بسپار</label>
+            </div>
             <button css={buttonStyles} type="submit">
               ورود
             </button>

@@ -96,3 +96,14 @@ class AdminUserUpdate(BaseModel):
     city: Optional[str] = None
     phone_number: Optional[str] = None
     role: Optional[RoleEnum] = None
+
+class TokenWithRefresh(Token):
+    """Extended token schema with refresh token for 'remember me'"""
+    refresh_token: str = Field(..., description="Refresh token for long-term authentication")
+    expires_in: int = Field(..., description="Token expiration time in seconds")
+
+class LoginRequest(BaseModel):
+    """Schema for login requests with remember me option"""
+    username: str = Field(..., description="Username for login")
+    password: str = Field(..., description="Password for login")
+    remember_me: bool = Field(False, description="Whether to keep the user logged in")

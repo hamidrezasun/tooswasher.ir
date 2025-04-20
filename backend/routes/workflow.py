@@ -1,4 +1,3 @@
-# routes/workflow.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 from typing import List
@@ -7,20 +6,20 @@ import schemas.workflow as workflow_schemas
 import schemas.user as user_schemas
 import auth
 from database import get_db
-from models.workflow import Workflow, WorkflowStep, WorkflowStepTemplate  # Added WorkflowStepTemplate
+from models.workflow import Workflow, WorkflowStep, WorkflowStepTemplate
 from models.user import User, RoleEnum
 
 router = APIRouter(
-    prefix="/api/workflows",
+    prefix="/workflows",
     tags=["workflows"]
 )
 
 def check_admin_or_participant(workflow: Workflow, user: user_schemas.User):
-    if user.role == RoleEnum.admin.value:
+    if user.role == RoleEnum.admin:
         return
     step_responsible = any(user.id in [u.id for u in step.responsible_users] for step in workflow.steps)
     workflow_responsible = user.id in [u.id for u in workflow.responsible_users]
-    if (user.role != RoleEnum.staff.value and 
+    if (user.role != RoleEnum.staff and 
         user.id != workflow.creator_id and 
         user.id != workflow.approver_id and 
         user not in workflow.viewers and 
@@ -34,9 +33,9 @@ def create_workflow(
     current_user: user_schemas.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role not in [RoleEnum.admin.value, RoleEnum.staff.value]:
+    if current_user.role not in [RoleEnum.admin, RoleEnum.staff]:
         raise HTTPException(status_code=403, detail="Only admin or staff can create workflows")
-    if workflow.responsible_user_ids and current_user.role != RoleEnum.admin.value:
+    if workflow.responsible_user_ids and current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can assign responsible users")
     existing_workflow = db.query(Workflow).filter(Workflow.title == workflow.title).first()
     if existing_workflow:
@@ -49,7 +48,7 @@ def create_workflow_from_template(
     current_user: user_schemas.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can create workflows from templates")
     created_workflow = workflow_crud.create_workflow_from_template(db=db, workflow=workflow, creator_id=current_user.id)
     if not created_workflow:
@@ -63,7 +62,7 @@ def read_workflows(
     current_user: user_schemas.User = Depends(auth.get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    if current_user.role == RoleEnum.admin.value:
+    if current_user.role == RoleEnum.admin:
         return workflow_crud.get_workflows(db, skip=skip, limit=limit)
     workflows = (
         db.query(Workflow)
@@ -110,8 +109,8 @@ def update_workflow(
     db_workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not db_workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    if current_user.role != RoleEnum.admin.value:
-        if current_user.role != RoleEnum.staff.value or db_workflow.creator_id != current_user.id:
+    if current_user.role != RoleEnum.admin:
+        if current_user.role != RoleEnum.staff or db_workflow.creator_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to update workflow")
         if workflow.responsible_user_ids is not None:
             raise HTTPException(status_code=403, detail="Only admin can assign responsible users")
@@ -136,8 +135,8 @@ def delete_workflow(
     db_workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
     if not db_workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
-    if current_user.role != RoleEnum.admin.value:
-        if current_user.role != RoleEnum.staff.value or db_workflow.creator_id != current_user.id:
+    if current_user.role != RoleEnum.admin:
+        if current_user.role != RoleEnum.staff or db_workflow.creator_id != current_user.id:
             raise HTTPException(status_code=403, detail="Not authorized to delete workflow")
     if db_workflow.steps:
         raise HTTPException(
@@ -159,7 +158,7 @@ def create_workflow_step(
         raise HTTPException(status_code=404, detail="Workflow not found")
     
     is_workflow_responsible = current_user.id in [u.id for u in workflow.responsible_users]
-    if current_user.role != RoleEnum.admin.value and not is_workflow_responsible:
+    if current_user.role != RoleEnum.admin and not is_workflow_responsible:
         raise HTTPException(status_code=403, detail="Only admin or workflow responsible users can add steps")
     
     if workflow.is_template and step.template_step_id:
@@ -172,7 +171,7 @@ def create_workflow_step(
     elif workflow.is_template and not step.template_step_id:
         raise HTTPException(status_code=400, detail="Templated workflows require a template step")
     
-    if current_user.role != RoleEnum.admin.value and step.responsible_user_ids:
+    if current_user.role != RoleEnum.admin and step.responsible_user_ids:
         raise HTTPException(status_code=403, detail="Only admin can assign responsible users to steps")
     
     return workflow_crud.create_workflow_step(db=db, workflow_id=workflow_id, step=step)
@@ -215,7 +214,7 @@ def update_workflow_step(
     db_step = db.query(WorkflowStep).filter(WorkflowStep.id == step_id).first()
     if not db_step or db_step.workflow_id != workflow_id:
         raise HTTPException(status_code=404, detail="Step not found")
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         step_responsible = current_user.id in [u.id for u in db_step.responsible_users]
         workflow_responsible = current_user.id in [u.id for u in db_step.workflow.responsible_users]
         if not (step_responsible or workflow_responsible):
@@ -237,7 +236,7 @@ def delete_workflow_step(
     db_step = db.query(WorkflowStep).filter(WorkflowStep.id == step_id).first()
     if not db_step or db_step.workflow_id != workflow_id:
         raise HTTPException(status_code=404, detail="Step not found")
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can delete steps")
     workflow_crud.delete_workflow_step(db, step_id=step_id)
     return None
@@ -254,9 +253,36 @@ def create_workflow_step_template(
         raise HTTPException(status_code=404, detail="Workflow not found")
     if not workflow.is_template:
         raise HTTPException(status_code=400, detail="Workflow is not a template")
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can create template steps")
     return workflow_crud.create_workflow_step_template(db=db, workflow_id=workflow_id, step_template=step_template)
+
+@router.get("/{workflow_id}/template-steps/", response_model=List[workflow_schemas.WorkflowStepTemplateInDB])
+def read_workflow_step_templates(
+    workflow_id: int,
+    skip: int = 0,
+    limit: int = 100,
+    current_user: user_schemas.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    workflow = db.query(Workflow).filter(Workflow.id == workflow_id).first()
+    if not workflow:
+        raise HTTPException(status_code=404, detail="Workflow not found")
+    check_admin_or_participant(workflow, current_user)
+    return workflow_crud.get_workflow_step_templates(db, workflow_id=workflow_id, skip=skip, limit=limit)
+
+@router.get("/{workflow_id}/template-steps/{step_template_id}", response_model=workflow_schemas.WorkflowStepTemplateInDB)
+def read_workflow_step_template(
+    workflow_id: int,
+    step_template_id: int,
+    current_user: user_schemas.User = Depends(auth.get_current_active_user),
+    db: Session = Depends(get_db)
+):
+    step_template = workflow_crud.get_workflow_step_template(db, step_template_id=step_template_id)
+    if not step_template or step_template.workflow_id != workflow_id:
+        raise HTTPException(status_code=404, detail="Step template not found")
+    check_admin_or_participant(step_template.workflow, current_user)
+    return step_template
 
 @router.put("/{workflow_id}/template-steps/{step_template_id}", response_model=workflow_schemas.WorkflowStepTemplateInDB)
 def update_workflow_step_template(
@@ -272,7 +298,7 @@ def update_workflow_step_template(
     ).first()
     if not db_step_template:
         raise HTTPException(status_code=404, detail="Step template not found")
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can update template steps")
     updated_step_template = workflow_crud.update_workflow_step_template(
         db, step_template_id=step_template_id, step_template=step_template
@@ -294,7 +320,7 @@ def delete_workflow_step_template(
     ).first()
     if not db_step_template:
         raise HTTPException(status_code=404, detail="Step template not found")
-    if current_user.role != RoleEnum.admin.value:
+    if current_user.role != RoleEnum.admin:
         raise HTTPException(status_code=403, detail="Only admin can delete template steps")
     workflow_crud.delete_workflow_step_template(db, step_template_id=step_template_id)
     return None
